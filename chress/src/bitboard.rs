@@ -94,6 +94,7 @@ impl Display for Bitboard {
 
 impl Mul<bool> for Bitboard {
     type Output = Bitboard;
+    #[inline]
     fn mul(self, rhs: bool) -> Self::Output {
         Bitboard(self.0 * rhs as u64)
     }
@@ -101,6 +102,7 @@ impl Mul<bool> for Bitboard {
 
 impl Not for Bitboard {
     type Output = Bitboard;
+    #[inline]
     fn not(self) -> Self::Output {
         Bitboard(!self.0)
     }
