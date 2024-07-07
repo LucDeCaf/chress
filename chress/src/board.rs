@@ -373,19 +373,33 @@ impl Board {
     pub fn perft(&mut self, depth: usize) -> u64 {
         let mut results = 0;
 
-        let legal_moves = self.legal_moves();
+        let moves = self.pseudolegal_moves();
 
         if depth == 0 {
             return 1;
         }
 
         if depth == 1 {
-            return legal_moves.len() as u64;
+            return moves
+                .into_iter()
+                .filter(|mv| self.is_legal_move(*mv))
+                .count() as u64;
         }
 
-        for r#move in self.legal_moves() {
+        for r#move in moves {
             self.make_move(r#move).unwrap();
-            results += self.perft(depth - 1);
+
+            let king_square = Square::ALL[self
+                .bitboard(Piece::King, self.active_color.inverse())
+                .0
+                .trailing_zeros() as usize];
+
+            let in_check = self.square_attacked_by(king_square, self.active_color);
+
+            if !in_check {
+                results += self.perft(depth - 1);
+            }
+
             self.unmake_move().unwrap();
         }
 
@@ -394,15 +408,23 @@ impl Board {
 
     pub fn divide(&mut self, depth: usize) -> (u64, Vec<(Move, u64)>) {
         let mut total = 0;
-        let moves = self.legal_moves();
+        let moves = self.pseudolegal_moves();
         let mut results = Vec::with_capacity(moves.len());
 
         for r#move in moves {
             self.make_move(r#move).unwrap();
+            let king_square = Square::ALL[self
+                .bitboard(Piece::King, self.active_color.inverse())
+                .0
+                .trailing_zeros() as usize];
 
-            let count = self.perft(depth - 1);
-            total += count;
-            results.push((r#move, count));
+            let in_check = self.square_attacked_by(king_square, self.active_color);
+
+            if !in_check {
+                let count = self.perft(depth - 1);
+                total += count;
+                results.push((r#move, count));
+            }
 
             self.unmake_move().unwrap();
         }
@@ -614,7 +636,7 @@ impl Board {
         Self::king_attacks(square) & !self.friendly_pieces()
     }
 
-    // ! 7 branches
+    // TODO: Remove all calls to Bitboard::active() due to it allocating a new Vector every time
     /// Get all pseudolegal moves
     pub fn pseudolegal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
@@ -674,6 +696,7 @@ impl Board {
 
             // Promotion
             for to in captures.active() {
+                // ? Not sure if this branch can actually be removed
                 if to.rank() % 7 == 0 {
                     moves.push(Move::new_with_promotion(from, to, Piece::Knight));
                     moves.push(Move::new_with_promotion(from, to, Piece::Bishop));
@@ -699,8 +722,9 @@ impl Board {
         let pawns_that_can_take =
             self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
 
-        // TODO: Rewrite to not use .active() (allocates a new Vec for little benefit)
         let mut actual_pawns = pawns_that_can_take & !block_mask;
+
+        // Add pseudolegal en passant moves
         for _ in 0..actual_pawns.0.count_ones() {
             let from = Square::ALL[actual_pawns.pop_lsb()];
 

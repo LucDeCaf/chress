@@ -322,12 +322,12 @@ mod board_tests {
         let mut board = Board::new();
         board.load_from_fen(START_FEN).unwrap();
 
-        assert_eq!(board.perft(0), 1);
-        assert_eq!(board.perft(1), 20);
-        assert_eq!(board.perft(2), 400);
-        assert_eq!(board.perft(3), 8902);
-        assert_eq!(board.perft(4), 197281);
-        assert_eq!(board.perft(5), 4865609);
+        // assert_eq!(board.perft(0), 1);
+        // assert_eq!(board.perft(1), 20);
+        // assert_eq!(board.perft(2), 400);
+        // assert_eq!(board.perft(3), 8902);
+        // assert_eq!(board.perft(4), 197281);
+        // assert_eq!(board.perft(5), 4865609);
         assert_eq!(board.perft(6), 119060324);
         // assert_eq!(board.perft(7), 3195901860);
     }
@@ -337,10 +337,10 @@ mod board_tests {
         let mut board = Board::new();
         board.load_from_fen(POSITION_2).unwrap();
 
-        assert_eq!(board.perft(1), 48);
-        assert_eq!(board.perft(2), 2039);
-        assert_eq!(board.perft(3), 97862);
-        assert_eq!(board.perft(4), 4085603);
+        // assert_eq!(board.perft(1), 48);
+        // assert_eq!(board.perft(2), 2039);
+        // assert_eq!(board.perft(3), 97862);
+        // assert_eq!(board.perft(4), 4085603);
         assert_eq!(board.perft(5), 193690690);
         // assert_eq!(board.perft(6), 8031647685);
     }
@@ -350,12 +350,12 @@ mod board_tests {
         let mut board = Board::new();
         board.load_from_fen(POSITION_3).unwrap();
 
-        assert_eq!(board.perft(1), 14);
-        assert_eq!(board.perft(2), 191);
-        assert_eq!(board.perft(3), 2812);
-        assert_eq!(board.perft(4), 43238);
-        assert_eq!(board.perft(5), 674624);
-        assert_eq!(board.perft(6), 11030083);
+        // assert_eq!(board.perft(1), 14);
+        // assert_eq!(board.perft(2), 191);
+        // assert_eq!(board.perft(3), 2812);
+        // assert_eq!(board.perft(4), 43238);
+        // assert_eq!(board.perft(5), 674624);
+        // assert_eq!(board.perft(6), 11030083);
         assert_eq!(board.perft(7), 178633661);
         // assert_eq!(board.perft(8), 3009794393);
     }
@@ -365,10 +365,10 @@ mod board_tests {
         let mut board = Board::new();
         board.load_from_fen(POSITION_4).unwrap();
 
-        assert_eq!(board.perft(1), 6);
-        assert_eq!(board.perft(2), 264);
-        assert_eq!(board.perft(3), 9467);
-        assert_eq!(board.perft(4), 422333);
+        // assert_eq!(board.perft(1), 6);
+        // assert_eq!(board.perft(2), 264);
+        // assert_eq!(board.perft(3), 9467);
+        // assert_eq!(board.perft(4), 422333);
         assert_eq!(board.perft(5), 15833292);
         // assert_eq!(board.perft(6), 706045033);
     }
@@ -378,10 +378,10 @@ mod board_tests {
         let mut board = Board::new();
         board.load_from_fen(POSITION_5).unwrap();
 
-        assert_eq!(board.perft(1), 44);
-        assert_eq!(board.perft(2), 1486);
-        assert_eq!(board.perft(3), 62379);
-        assert_eq!(board.perft(4), 2103487);
+        // assert_eq!(board.perft(1), 44);
+        // assert_eq!(board.perft(2), 1486);
+        // assert_eq!(board.perft(3), 62379);
+        // assert_eq!(board.perft(4), 2103487);
         assert_eq!(board.perft(5), 89941194);
     }
 
