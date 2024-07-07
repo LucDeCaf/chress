@@ -4,6 +4,8 @@ extern crate test;
 
 #[cfg(test)]
 mod bitboard_tests {
+    use std::hint::black_box;
+
     use chress::{
         bitboard::Bitboard,
         board::{Board, POSITION_2},
@@ -12,7 +14,70 @@ mod bitboard_tests {
         r#move::Move,
         square::Square,
     };
+    use rand::{thread_rng, Rng};
     use test::Bencher;
+
+    #[bench]
+    fn looped_bits_zero(b: &mut Bencher) {
+        let bb = Bitboard(0);
+
+        b.iter(|| {
+            let mut count = 0;
+
+            for sq in bb.into_iter() {
+                count += black_box(sq as u8);
+            }
+
+            black_box(count)
+        });
+    }
+
+    #[bench]
+    fn looped_bits_max(b: &mut Bencher) {
+        let bb = Bitboard(u64::MAX);
+
+        b.iter(|| {
+            let mut count = 0;
+
+            for sq in bb.into_iter() {
+                count += black_box(sq as u8);
+            }
+
+            black_box(count)
+        });
+    }
+
+    #[bench]
+    fn manual_bits_zero(b: &mut Bencher) {
+        let mut bb = Bitboard(0);
+
+        b.iter(|| {
+            let mut count = 0;
+
+            for _ in 0..bb.0.count_ones() {
+                count += black_box(Square::ALL[bb.pop_lsb() as usize] as u8);
+            }
+
+            black_box(count)
+        });
+    }
+
+    #[bench]
+    fn manual_bits_max(b: &mut Bencher) {
+        let mut bb = black_box(Bitboard(u64::MAX));
+
+        b.iter(|| {
+            black_box({
+                let mut count = black_box(0);
+
+                for _ in black_box(0..bb.0.count_ones()) {
+                    black_box(count += Square::ALL[bb.pop_lsb() as usize] as u8);
+                }
+
+                black_box(count);
+            });
+        });
+    }
 
     #[bench]
     fn append_moves_from_fn(b: &mut Bencher) {
