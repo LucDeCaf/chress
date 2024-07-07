@@ -700,7 +700,10 @@ impl Board {
             self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
 
         // TODO: Rewrite to not use .active() (allocates a new Vec for little benefit)
-        for from in (pawns_that_can_take & !block_mask).active() {
+        let mut actual_pawns = pawns_that_can_take & !block_mask;
+        for _ in 0..actual_pawns.0.count_ones() {
+            let from = Square::ALL[actual_pawns.pop_lsb()];
+
             moves.push(Move::new(from, ep_square));
         }
 
@@ -1100,7 +1103,7 @@ impl Default for Board {
     /// ## Example
     /// ```
     /// use chress::board::{Board, START_FEN};
-    /// 
+    ///
     /// // Create a board using 'default'
     /// let default_board = Board::default();
     ///
