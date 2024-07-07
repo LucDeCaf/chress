@@ -1013,20 +1013,18 @@ impl Board {
 
             let is_en_passant = move_data.flags.en_passant_valid() && ep_mask == to.bitboard();
 
-            let square = if is_en_passant {
+            ep_mask = {
                 let is_white = color == Color::White;
 
                 let shl = (ep_mask << 8) * !is_white;
                 let shr = (ep_mask >> 8) * is_white;
 
-                ep_mask = shl | shr;
-
-                Square::ALL[ep_mask.0.trailing_zeros() as usize]
-            } else {
-                to
+                shl | shr
             };
 
-            self.add_piece(captured_piece, color.inverse(), square);
+            let square_mask = (ep_mask * is_en_passant) | (to.bitboard() * !is_en_passant);
+
+            *self.bitboard_mut(captured_piece, color.inverse()) |= square_mask;
         }
 
         // Set move data
