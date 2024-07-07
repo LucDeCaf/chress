@@ -73,19 +73,6 @@ mod board_tests {
         })
     }
 
-    // Position 3
-    // - Branched: 4,600,000 ± 100,000
-    // - Branchless: 4,600,000 ± 100,000
-    //
-    // Will use branchless simply because less branching is generally good
-    #[bench]
-    fn pseudo_en_passant(b: &mut Bencher) {
-        let mut board = Board::new();
-        board.load_from_fen(POSITION_3).unwrap();
-
-        b.iter(|| board.perft(4))
-    }
-
     // 30.7 ± 1.1
     #[bench]
     fn piece_at_branched(b: &mut Bencher) {
@@ -328,7 +315,7 @@ mod board_tests {
         // assert_eq!(board.perft(3), 8902);
         // assert_eq!(board.perft(4), 197281);
         // assert_eq!(board.perft(5), 4865609);
-        assert_eq!(board.perft(6), 119060324);
+        assert_eq!(board.perft_parallel(6), 119060324);
         // assert_eq!(board.perft(7), 3195901860);
     }
 
@@ -341,7 +328,7 @@ mod board_tests {
         // assert_eq!(board.perft(2), 2039);
         // assert_eq!(board.perft(3), 97862);
         // assert_eq!(board.perft(4), 4085603);
-        assert_eq!(board.perft(5), 193690690);
+        assert_eq!(board.perft_parallel(5), 193690690);
         // assert_eq!(board.perft(6), 8031647685);
     }
 
@@ -356,7 +343,7 @@ mod board_tests {
         // assert_eq!(board.perft(4), 43238);
         // assert_eq!(board.perft(5), 674624);
         // assert_eq!(board.perft(6), 11030083);
-        assert_eq!(board.perft(7), 178633661);
+        assert_eq!(board.perft_parallel(7), 178633661);
         // assert_eq!(board.perft(8), 3009794393);
     }
 
@@ -369,10 +356,11 @@ mod board_tests {
         // assert_eq!(board.perft(2), 264);
         // assert_eq!(board.perft(3), 9467);
         // assert_eq!(board.perft(4), 422333);
-        assert_eq!(board.perft(5), 15833292);
+        assert_eq!(board.perft_parallel(5), 15833292);
         // assert_eq!(board.perft(6), 706045033);
     }
 
+    // 25,850,916.70 ns/iter (+/- 1,392,332.94)
     #[test]
     fn perft_position_5() {
         let mut board = Board::new();
@@ -382,7 +370,7 @@ mod board_tests {
         // assert_eq!(board.perft(2), 1486);
         // assert_eq!(board.perft(3), 62379);
         // assert_eq!(board.perft(4), 2103487);
-        assert_eq!(board.perft(5), 89941194);
+        assert_eq!(board.perft_parallel(5), 89941194);
     }
 
     #[test]
