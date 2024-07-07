@@ -77,6 +77,7 @@ impl Display for Flags {
 
 impl Mul<bool> for Flags {
     type Output = Flags;
+    #[inline]
     fn mul(self, rhs: bool) -> Self::Output {
         Self(self.0 * rhs as u8)
     }
@@ -84,6 +85,7 @@ impl Mul<bool> for Flags {
 
 impl BitAnd<u8> for Flags {
     type Output = Flags;
+    #[inline]
     fn bitand(self, rhs: u8) -> Self::Output {
         Self(self.0 & rhs)
     }
@@ -91,6 +93,7 @@ impl BitAnd<u8> for Flags {
 
 impl BitOr<u8> for Flags {
     type Output = Flags;
+    #[inline]
     fn bitor(self, rhs: u8) -> Self::Output {
         Self(self.0 | rhs)
     }
@@ -98,24 +101,28 @@ impl BitOr<u8> for Flags {
 
 impl BitXor<u8> for Flags {
     type Output = Flags;
+    #[inline]
     fn bitxor(self, rhs: u8) -> Self::Output {
         Self(self.0 ^ rhs)
     }
 }
 
 impl BitAndAssign<u8> for Flags {
+    #[inline]
     fn bitand_assign(&mut self, rhs: u8) {
         self.0 &= rhs
     }
 }
 
 impl BitOrAssign<u8> for Flags {
+    #[inline]
     fn bitor_assign(&mut self, rhs: u8) {
         self.0 |= rhs
     }
 }
 
 impl BitXorAssign<u8> for Flags {
+    #[inline]
     fn bitxor_assign(&mut self, rhs: u8) {
         self.0 ^= rhs
     }
@@ -125,6 +132,7 @@ macro_rules! impl_self_bit_ops {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Flags {
             type Output = Flags;
+            #[inline]
             fn $fn(self, rhs: Self) -> Self::Output {
                 Flags(self.0 $ex rhs.0)
             }
@@ -135,6 +143,7 @@ macro_rules! impl_self_bit_ops {
 macro_rules! impl_self_bit_ops_assign {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Flags {
+            #[inline]
             fn $fn(&mut self, rhs: Self) {
                 self.0 $ex rhs.0;
             }
@@ -151,6 +160,7 @@ impl_self_bit_ops_assign!(BitXorAssign, bitxor_assign, ^=);
 
 impl Not for Flags {
     type Output = Flags;
+    #[inline]
     fn not(self) -> Self::Output {
         Flags(!self.0)
     }
