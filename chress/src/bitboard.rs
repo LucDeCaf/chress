@@ -55,33 +55,6 @@ impl Bitboard {
     pub fn is_empty(&self) -> bool {
         *self == Bitboard::EMPTY
     }
-
-    // ! THIS FUNCTION IS BAD, I DON'T LIKE IT, GET RID OF IT SOON
-    pub fn active(&self) -> Vec<Square> {
-        let mut mask = self.0;
-        let mut squares = Vec::new();
-
-        if self.is_empty() {
-            return Vec::new();
-        }
-
-        for square in Square::ALL {
-            if mask & 1 == 1 {
-                squares.push(square);
-            }
-            mask >>= 1;
-
-            if mask == 0 {
-                break;
-            }
-        }
-
-        squares
-    }
-
-    pub fn inactive(&self) -> Vec<Square> {
-        (!*self).active()
-    }
 }
 
 impl Display for Bitboard {

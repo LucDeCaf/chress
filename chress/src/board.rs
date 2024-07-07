@@ -1246,10 +1246,12 @@ impl Display for Board {
         .flatten()
         .collect::<Vec<char>>();
 
-        for (i, bb) in self.piece_bitboards.into_iter().enumerate() {
+        for (i, mut bb) in self.piece_bitboards.into_iter().enumerate() {
             let piece_char = PIECE_CHARS[i];
 
-            for square in bb.active() {
+            for _ in 0..bb.0.count_ones() {
+                let square = Square::ALL[bb.pop_lsb() as usize];
+
                 let x_offset = 3 + ((square.file()) * 2) as usize;
                 let y_offset = 19 * (7 - square.rank()) as usize;
                 let index = x_offset + y_offset;
