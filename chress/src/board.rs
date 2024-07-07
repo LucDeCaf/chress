@@ -614,6 +614,7 @@ impl Board {
         Self::king_attacks(square) & !self.friendly_pieces()
     }
 
+    // ! 7 branches
     /// Get all pseudolegal moves
     pub fn pseudolegal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
@@ -628,17 +629,18 @@ impl Board {
         let empty_squares = !all_pieces;
 
         // Pawn move data
-        // ! One branch for all pawn move data
-        let (single_push_froms, double_push_froms) = match color {
-            Color::White => (
-                self.white_pawns_able_to_push(empty_squares),
-                self.white_pawns_able_to_double_push(empty_squares),
-            ),
-            Color::Black => (
+        let pawn_data = [
+            (
                 self.black_pawns_able_to_push(empty_squares),
                 self.black_pawns_able_to_double_push(empty_squares),
             ),
-        };
+            (
+                self.white_pawns_able_to_push(empty_squares),
+                self.white_pawns_able_to_double_push(empty_squares),
+            ),
+        ];
+
+        let (single_push_froms, double_push_froms) = pawn_data[color as usize];
 
         let pawns = self.bitboard(Piece::Pawn, color);
 
@@ -796,8 +798,7 @@ impl Board {
         self.make_move(r#move).unwrap();
 
         let king_square =
-            Square::try_from(self.bitboard(Piece::King, current_color).0.trailing_zeros() as usize)
-                .unwrap();
+            Square::ALL[self.bitboard(Piece::King, current_color).0.trailing_zeros() as usize];
 
         let is_legal = !self.square_attacked_by(king_square, attacker_color);
 
@@ -806,6 +807,8 @@ impl Board {
         is_legal
     }
 
+    // ! 5 branches, but this may not be a bad thing
+    // TODO: Benchmark this function compared to its branchless version using multiple unique positions
     /// Checks if a square is seen by pieces of a certain color for the
     /// purpose of legal move generation
     pub fn square_attacked_by(&self, square: Square, attacker_color: Color) -> bool {
@@ -848,7 +851,9 @@ impl Board {
         false
     }
 
-    /// Returns the captured piece, if any
+    /// Plays a move on the board.
+    ///
+    /// This function will fail if the From square does not contain a piece.
     pub fn make_move(&mut self, r#move: Move) -> Result<(), MakeMoveError> {
         let color = self.active_color;
         let from = r#move.from();
@@ -878,11 +883,8 @@ impl Board {
 
             let is_double_move = from.rank().abs_diff(to.rank()) == 2;
 
-            // Double moves (en passant mask)
-
             // Unset en passant file bits if necessary
             self.flags &= !(flags::masks::EP_FILE * is_double_move);
-
             // Set ep flag and ep file data correctly
             self.flags |= (flags::masks::EP_IS_VALID | Flags(from.file() << 4)) * is_double_move;
 
@@ -962,6 +964,11 @@ impl Board {
         Ok(())
     }
 
+    // ! 4 branches
+    /// Unmakes a move on the board by popping the most recent move data off the stack.
+    ///
+    /// This function will fail if there is no piece to unmove on the To square, or if there
+    /// is no data on the stack to pop.
     pub fn unmake_move(&mut self) -> Result<(), UnmakeMoveError> {
         let Some(move_data) = self.move_list.pop() else {
             return Err(UnmakeMoveError("no move to unmake".to_owned()));
@@ -1040,6 +1047,19 @@ impl Board {
 }
 
 impl Default for Board {
+    /// Creates a new instance of Board with the starting position loaded.
+    ///
+    /// ## Example
+    /// ```
+    /// // Create a board using 'default'
+    /// let default_board = Board::default();
+    ///
+    /// // Create a board using 'new'
+    /// let mut new_board = Board::new();
+    /// new_board.load_from_fen(START_FEN).unwrap();
+    ///
+    /// assert_eq!(default_board, new_board);
+    /// ```
     fn default() -> Self {
         let mut board = Board::new();
         board.load_from_fen(START_FEN).unwrap();
