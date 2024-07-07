@@ -856,6 +856,7 @@ impl Board {
         self.halfmoves += 1;
 
         // Special pawn moves
+        // TODO: Try to remove some branches here
         if moved_piece == Piece::Pawn {
             self.halfmoves = 0;
 
@@ -921,23 +922,20 @@ impl Board {
         }
 
         // Castling rights
-        // TODO: Make branchless with lookup tables
-        if moved_piece == Piece::Rook {
-            match from {
-                Square::A1 => self.flags &= !flags::masks::WHITE_QUEENSIDE,
-                Square::A8 => self.flags &= !flags::masks::BLACK_QUEENSIDE,
-                Square::H1 => self.flags &= !flags::masks::WHITE_KINGSIDE,
-                Square::H8 => self.flags &= !flags::masks::BLACK_KINGSIDE,
-                _ => (),
-            }
-        }
-        match to {
-            Square::A1 => self.flags &= !flags::masks::WHITE_QUEENSIDE,
-            Square::A8 => self.flags &= !flags::masks::BLACK_QUEENSIDE,
-            Square::H1 => self.flags &= !flags::masks::WHITE_KINGSIDE,
-            Square::H8 => self.flags &= !flags::masks::BLACK_KINGSIDE,
-            _ => (),
-        }
+        const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
+            let mut table = [Flags::UNIVERSE; 64];
+            table[Square::A1 as usize] = Flags(!flags::masks::WHITE_QUEENSIDE.0);
+            table[Square::A8 as usize] = Flags(!flags::masks::BLACK_QUEENSIDE.0);
+            table[Square::H1 as usize] = Flags(!flags::masks::WHITE_KINGSIDE.0);
+            table[Square::H8 as usize] = Flags(!flags::masks::BLACK_KINGSIDE.0);
+            table
+        };
+
+        let is_rook = moved_piece == Piece::Rook;
+        let reset_mask = Flags::UNIVERSE * !is_rook;
+
+        self.flags &= CASTLING_RIGHTS_FLAGS[from as usize] | reset_mask;
+        self.flags &= CASTLING_RIGHTS_FLAGS[to as usize];
 
         self.remove_piece(moved_piece, color, from);
 

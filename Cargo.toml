@@ -4,9 +4,6 @@ resolver = "2"
 
 [profile.test]
 opt-level = 3     # Perft takes ridiculously long to run otherwise
-codegen-units = 1
-lto = "fat"
-panic = "abort"
 
 [profile.release]
 opt-level = 3

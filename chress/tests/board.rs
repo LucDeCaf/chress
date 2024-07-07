@@ -22,7 +22,11 @@ mod board_tests {
 
     // Returns Result<(), E>: 1000 ± 40
     // Returns ()           : 1000 ± 60
-    // Will continue to use Results
+    //
+    // Will continue to return Results
+    //
+    // No lookup for castling rights:
+    // Lookup for castling rights   :
     #[bench]
     fn make_unmake(b: &mut Bencher) {
         let mut board = Board::new();
@@ -31,7 +35,7 @@ mod board_tests {
 
         b.iter(|| {
             for r#move in moves.iter() {
-                board.make_move(*r#move);
+                board.make_move(*r#move).unwrap();
                 board.unmake_move().unwrap();
             }
         })
@@ -197,8 +201,8 @@ mod board_tests {
 
         board.active_color = Color::Black;
 
-        board.make_move(Move::new(Square::E7, Square::E5));
-        board.make_move(Move::new(Square::D5, Square::E6));
+        board.make_move(Move::new(Square::E7, Square::E5)).unwrap();
+        board.make_move(Move::new(Square::D5, Square::E6)).unwrap();
 
         assert_eq!(board.move_list[0].captured_piece, None);
         assert_eq!(board.move_list[1].captured_piece, Some(Piece::Pawn));
@@ -224,8 +228,10 @@ mod board_tests {
 
         let r#move = Move::new(Square::E2, Square::E4);
 
-        board_1.make_move(r#move);
-        board_1.make_move(Move::new(Square::G8, Square::F6));
+        board_1.make_move(r#move).unwrap();
+        board_1
+            .make_move(Move::new(Square::G8, Square::F6))
+            .unwrap();
         board_1.unmake_move().unwrap();
         board_1.unmake_move().unwrap();
 
@@ -248,7 +254,7 @@ mod board_tests {
 
         let r#move = Move::new(Square::D5, Square::E6);
 
-        board_1.make_move(r#move);
+        board_1.make_move(r#move).unwrap();
         board_1.unmake_move().unwrap();
 
         assert_eq!(board_1, board_2);
@@ -263,7 +269,7 @@ mod board_tests {
             "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 c6d4 d1d4 f8e7 e4e5 d7d5 e5d6 d8d6 d4d6 e7d6";
 
         for r#move in SCOTCH_GAME.split_ascii_whitespace() {
-            board.make_move(Move::try_from(r#move).unwrap());
+            board.make_move(Move::try_from(r#move).unwrap()).unwrap();
         }
 
         while let Some(_) = board.move_list.first() {

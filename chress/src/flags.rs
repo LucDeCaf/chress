@@ -10,7 +10,10 @@ pub mod masks {
     pub const EP_IS_VALID    : Flags = Flags(0b1000_0000);
 }
 
-use std::{fmt::Display, ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not}};
+use std::{
+    fmt::Display,
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Not},
+};
 
 use masks::*;
 
@@ -20,6 +23,9 @@ use super::color::Color;
 pub struct Flags(pub u8);
 
 impl Flags {
+    pub const EMPTY: Flags = Flags(0);
+    pub const UNIVERSE: Flags = Flags(u8::MAX);
+
     pub fn new(flags: u8) -> Self {
         Self(flags)
     }
@@ -73,6 +79,13 @@ impl Flags {
 impl Display for Flags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:08b}", self.0)
+    }
+}
+
+impl Mul<bool> for Flags {
+    type Output = Flags;
+    fn mul(self, rhs: bool) -> Self::Output {
+        Self(self.0 * rhs as u8)
     }
 }
 
