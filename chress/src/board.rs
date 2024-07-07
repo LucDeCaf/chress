@@ -11,7 +11,7 @@ use std::{
 use crate::{
     bitboard::Bitboard,
     color::Color,
-    flags::{self, Flags},
+    flags::Flags,
     piece::Piece,
     r#move::{Move, MoveData},
     square::Square,
@@ -69,10 +69,10 @@ const CASTLING_DESTINATIONS: [[Square; 2]; 2] = [
 ];
 const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
     let mut table = [Flags::UNIVERSE; 64];
-    table[Square::A1 as usize] = Flags(!flags::masks::WHITE_QUEENSIDE.0);
-    table[Square::A8 as usize] = Flags(!flags::masks::BLACK_QUEENSIDE.0);
-    table[Square::H1 as usize] = Flags(!flags::masks::WHITE_KINGSIDE.0);
-    table[Square::H8 as usize] = Flags(!flags::masks::BLACK_KINGSIDE.0);
+    table[Square::A1 as usize] = Flags(!Flags::WHITE_QUEENSIDE.0);
+    table[Square::A8 as usize] = Flags(!Flags::BLACK_QUEENSIDE.0);
+    table[Square::H1 as usize] = Flags(!Flags::WHITE_KINGSIDE.0);
+    table[Square::H8 as usize] = Flags(!Flags::BLACK_KINGSIDE.0);
     table
 };
 const ROOK_CASTLING_MOVEMASKS: [Bitboard; 64] = {
@@ -242,10 +242,10 @@ impl Board {
         if castling_rights != "-" {
             for right in castling_rights.chars() {
                 match right {
-                    'K' => self.flags |= flags::masks::WHITE_KINGSIDE,
-                    'Q' => self.flags |= flags::masks::WHITE_QUEENSIDE,
-                    'k' => self.flags |= flags::masks::BLACK_KINGSIDE,
-                    'q' => self.flags |= flags::masks::BLACK_QUEENSIDE,
+                    'K' => self.flags |= Flags::WHITE_KINGSIDE,
+                    'Q' => self.flags |= Flags::WHITE_QUEENSIDE,
+                    'k' => self.flags |= Flags::BLACK_KINGSIDE,
+                    'q' => self.flags |= Flags::BLACK_QUEENSIDE,
                     _ => return Err(ParseFenError::BadCastlingRights),
                 }
             }
@@ -257,7 +257,7 @@ impl Board {
 
         if en_passant != "-" {
             // Allow en passant
-            self.flags |= flags::masks::EP_IS_VALID;
+            self.flags |= Flags::EP_IS_VALID;
 
             let Ok(square) = Square::try_from(en_passant) else {
                 return Err(ParseFenError::BadEnPassant);
@@ -1038,9 +1038,9 @@ impl Board {
             let is_double_move = from.rank().abs_diff(to.rank()) == 2;
 
             // Unset en passant file bits if necessary
-            self.flags &= !(flags::masks::EP_FILE * is_double_move);
+            self.flags &= !(Flags::EP_FILE * is_double_move);
             // Set ep flag and ep file data correctly
-            self.flags |= (flags::masks::EP_IS_VALID | Flags(from.file() << 4)) * is_double_move;
+            self.flags |= (Flags::EP_IS_VALID | Flags(from.file() << 4)) * is_double_move;
 
             // En passant
             if !is_double_move {
@@ -1052,7 +1052,7 @@ impl Board {
                     false
                 };
 
-                self.flags &= !flags::masks::EP_IS_VALID;
+                self.flags &= !Flags::EP_IS_VALID;
 
                 if is_en_passant {
                     let captured_piece_rank = from.rank();
@@ -1068,7 +1068,7 @@ impl Board {
                 }
             }
         } else {
-            self.flags &= !flags::masks::EP_IS_VALID;
+            self.flags &= !Flags::EP_IS_VALID;
         }
 
         // Special king moves
