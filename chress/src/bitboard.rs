@@ -7,7 +7,7 @@ use std::{
     },
 };
 
-use super::{r#move::Move, square::Square};
+use super::square::Square;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub struct Bitboard(pub u64);

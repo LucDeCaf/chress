@@ -7,7 +7,6 @@ mod board_tests {
     use chress::{
         bitboard::Bitboard,
         board::{Board, START_FEN},
-        build::movemasks::KNIGHT_MOVES,
         color::Color,
         piece::Piece,
         r#move::Move,
