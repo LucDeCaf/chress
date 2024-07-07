@@ -2,7 +2,7 @@ use crate::build::magics::{
     MagicEntry, BISHOP_MAGICS, BISHOP_TABLE_SIZE, ROOK_MAGICS, ROOK_TABLE_SIZE,
 };
 
-use crate::board::{bitboard::Bitboard, square::Square};
+use crate::{bitboard::Bitboard, square::Square};
 
 const ROOK_MOVE_OFFSETS: [i8; 4] = [1, 8, -1, -8];
 const BISHOP_MOVE_OFFSETS: [i8; 4] = [7, 9, -7, -9];

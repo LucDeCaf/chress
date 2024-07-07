@@ -5,7 +5,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use chress::board::{r#move::Move, Board};
+use chress::{board::Board, r#move::Move};
 
 pub fn perft(board: &mut Board, depth: usize) {
     let (chress_total, chress_move_results) = board.divide(depth);

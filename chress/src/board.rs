@@ -1,26 +1,20 @@
-pub mod bitboard;
-pub mod color;
-pub mod flags;
-pub mod r#move;
-pub mod move_gen;
-pub mod piece;
-pub mod square;
-
 use std::{error::Error, fmt::Display};
 
-use bitboard::Bitboard;
-use color::Color;
-use flags::Flags;
-use piece::Piece;
-use r#move::{Move, MoveData};
-use square::Square;
+use crate::{
+    bitboard::Bitboard,
+    color::Color,
+    flags::{self, Flags},
+    piece::Piece,
+    r#move::{Move, MoveData},
+    square::Square,
+};
 
 use crate::build::{
     magics::{BISHOP_MAGICS, ROOK_MAGICS},
     movemasks::{KING_MOVES, KNIGHT_MOVES, PAWN_CAPTURES},
 };
 
-use super::board::move_gen::{create_bishop_table, create_rook_table, magic_index};
+use crate::move_gen::{create_bishop_table, create_rook_table, magic_index};
 
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 

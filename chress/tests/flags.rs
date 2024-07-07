@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod flag_tests {
-    use chress::board::{color::Color, flags::Flags};
+    use chress::{color::Color, flags::Flags};
 
     #[test]
     fn kingside() {

@@ -1,4 +1,4 @@
-use crate::board::bitboard::Bitboard;
+use crate::bitboard::Bitboard;
 
 pub const PAWN_MOVES: [&[Bitboard; 64]; 2] = [&BLACK_PAWN_MOVES, &WHITE_PAWN_MOVES];
 pub const PAWN_CAPTURES: [&[Bitboard; 64]; 2] = [&BLACK_PAWN_CAPTURES, &WHITE_PAWN_CAPTURES];

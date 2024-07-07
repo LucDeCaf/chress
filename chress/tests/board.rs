@@ -4,9 +4,13 @@ extern crate test;
 
 #[cfg(test)]
 mod board_tests {
-    use chress::board::{
-        bitboard::Bitboard, color::Color, piece::Piece, r#move::Move, square::Square, Board,
-        START_FEN,
+    use chress::{
+        bitboard::Bitboard,
+        board::{Board, START_FEN},
+        color::Color,
+        piece::Piece,
+        r#move::Move,
+        square::Square,
     };
     use rand::{thread_rng, Rng};
     use test::Bencher;

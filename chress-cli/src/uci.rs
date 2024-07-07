@@ -1,6 +1,9 @@
 use std::{error::Error, fmt::Display, io::stdin};
 
-use chress::board::{r#move::Move, Board, START_FEN};
+use chress::{
+    board::{Board, START_FEN},
+    r#move::Move,
+};
 
 #[derive(Debug, PartialEq)]
 enum Command {

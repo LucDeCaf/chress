@@ -2,7 +2,13 @@ extern crate chress;
 
 use std::{io::stdin, process::Command};
 
-use chress::board::{color::Color, piece::Piece, r#move::Move, square::Square, Board, START_FEN};
+use chress::{
+    board::{Board, START_FEN},
+    color::Color,
+    piece::Piece,
+    r#move::Move,
+    square::Square,
+};
 use chress_cli::{perft, uci};
 
 fn main() -> std::io::Result<()> {

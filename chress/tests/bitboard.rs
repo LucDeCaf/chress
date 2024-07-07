@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod bitboard_tests {
-    use chress::board::{bitboard::Bitboard, square::Square};
+    use chress::{bitboard::Bitboard, square::Square};
 
     #[test]
     fn bitboard_active() {

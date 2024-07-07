@@ -4,7 +4,7 @@ extern crate test;
 
 #[cfg(test)]
 pub mod piece_tests {
-    use chress::board::piece::{ParsePieceCharError, Piece};
+    use chress::piece::{ParsePieceCharError, Piece};
     use rand::{thread_rng, Rng};
     use test::Bencher;
 
