@@ -1005,28 +1005,21 @@ impl Board {
 
         // Replace any captured pieces
         if let Some(captured_piece) = move_data.captured_piece {
-            let mut ep_mask = Bitboard::EMPTY;
-
-            let is_en_passant = match move_data.flags.en_passant_file() {
-                Some(file) => {
-                    let rank = color.inverse().en_passant_rank();
-                    ep_mask |= Bitboard(1 << (rank * 8 + file));
-
-                    moved_piece == Piece::Pawn
-                        && captured_piece == Piece::Pawn
-                        && ep_mask == to.bitboard()
-                }
-                None => false,
+            let mut ep_mask = {
+                let rank = color.inverse().en_passant_rank();
+                let file = move_data.flags.en_passant_file_unchecked();
+                Bitboard(1 << (rank * 8 + file))
             };
 
+            let is_en_passant = move_data.flags.en_passant_valid() && ep_mask == to.bitboard();
+
             let square = if is_en_passant {
-                let mut shifted_mask = ep_mask;
                 match color {
-                    Color::White => shifted_mask >>= 8,
-                    Color::Black => shifted_mask <<= 8,
+                    Color::White => ep_mask >>= 8,
+                    Color::Black => ep_mask <<= 8,
                 }
 
-                Square::ALL[shifted_mask.0.trailing_zeros() as usize]
+                Square::ALL[ep_mask.0.trailing_zeros() as usize]
             } else {
                 to
             };
