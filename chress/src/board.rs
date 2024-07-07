@@ -25,6 +25,10 @@ use crate::build::{
 use crate::move_gen::{create_bishop_table, create_rook_table, magic_index};
 
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+pub const POSITION_2: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+pub const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
+pub const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+pub const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
 const KING_STARTING_SQUARES: [Square; 2] = [Square::E8, Square::E1];
 const CASTLING_BLOCKERS: [[Bitboard; 2]; 2] = [
@@ -402,7 +406,7 @@ impl Board {
                 .0
                 .trailing_zeros() as usize];
 
-            let in_check = self.square_attacked_by(king_square, self.active_color);
+            let in_check = self.square_attacked_by_branched(king_square, self.active_color);
 
             if !in_check {
                 results += self.perft(depth - 1);
@@ -426,7 +430,7 @@ impl Board {
                 .0
                 .trailing_zeros() as usize];
 
-            let in_check = self.square_attacked_by(king_square, self.active_color);
+            let in_check = self.square_attacked_by_branched(king_square, self.active_color);
 
             if !in_check {
                 let count = self.perft(depth - 1);
@@ -467,7 +471,7 @@ impl Board {
                 .0
                 .trailing_zeros() as usize];
 
-            let in_check = self.square_attacked_by(king_square, self.active_color);
+            let in_check = self.square_attacked_by_branched(king_square, self.active_color);
 
             if !in_check {
                 let cloned_board = self.clone();
@@ -696,6 +700,52 @@ impl Board {
         Self::king_attacks(square) & !self.friendly_pieces()
     }
 
+    /// Used with sliding pieces
+    pub fn append_moves_getter(
+        &self,
+        moves: &mut Vec<Move>,
+        mut pieces: Bitboard,
+        move_getter: fn(&Self, Square) -> Bitboard,
+    ) {
+        for _ in 0..pieces.0.count_ones() {
+            let i = pieces.pop_lsb();
+
+            let from = Square::ALL[i as usize];
+            let mut targets = move_getter(self, from);
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j as usize];
+
+                moves.push(Move::new(from, to));
+            }
+        }
+    }
+
+    /// Used with non-sliding pieces as it showed significant performance gains
+    pub fn append_moves_table(
+        &self,
+        moves: &mut Vec<Move>,
+        mut pieces: Bitboard,
+        move_table: &[Bitboard; 64],
+    ) {
+        let friendly_pieces = self.friendly_pieces();
+
+        for _ in 0..pieces.0.count_ones() {
+            let i = pieces.pop_lsb();
+
+            let from = Square::ALL[i as usize];
+            let mut targets = move_table[from as usize] & !friendly_pieces;
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j as usize];
+
+                moves.push(Move::new(from, to));
+            }
+        }
+    }
+
     // TODO: Remove all calls to Bitboard::active() due to it allocating a new Vector every time
     /// Get all pseudolegal moves
     pub fn pseudolegal_moves(&self) -> Vec<Move> {
@@ -733,6 +783,7 @@ impl Board {
 
             // Promotion
             if to.rank() % 7 == 0 {
+                // ? Not sure if this branch can actually be removed
                 moves.push(Move::new_with_promotion(from, to, Piece::Knight));
                 moves.push(Move::new_with_promotion(from, to, Piece::Bishop));
                 moves.push(Move::new_with_promotion(from, to, Piece::Rook));
@@ -786,25 +837,9 @@ impl Board {
 
         // Add pseudolegal en passant moves
         for _ in 0..actual_pawns.0.count_ones() {
-            let from = Square::ALL[actual_pawns.pop_lsb()];
+            let from = Square::ALL[actual_pawns.pop_lsb() as usize];
 
             moves.push(Move::new(from, ep_square));
-        }
-
-        // Knight moves
-        let mut knights = self.bitboard(Piece::Knight, color);
-        for _ in 0..knights.0.count_ones() {
-            let i = knights.pop_lsb();
-
-            let from = Square::ALL[i];
-            let mut targets = self.knight_moves(from);
-
-            for _ in 0..targets.0.count_ones() {
-                let j = targets.pop_lsb();
-                let to = Square::ALL[j];
-
-                moves.push(Move::new(from, to));
-            }
         }
 
         // King moves
@@ -812,19 +847,13 @@ impl Board {
         let king_square = Square::ALL[king_index];
 
         let mut targets = self.king_moves(king_square);
-
-        for _ in 0..targets.0.count_ones() {
-            let i = targets.pop_lsb();
-            let to = Square::ALL[i];
-
-            moves.push(Move::new(king_square, to));
-        }
+        targets.append_moves_from(&mut moves, king_square);
 
         // Castling
         // Check if king is on start square and not in check
         let king_start_square = KING_STARTING_SQUARES[color as usize];
         let on_start_square = king_square == king_start_square;
-        let in_check = self.square_attacked_by(king_start_square, attacker_color);
+        let in_check = self.square_attacked_by_branched(king_start_square, attacker_color);
 
         if on_start_square && !in_check {
             let blocker_list = CASTLING_BLOCKERS[color as usize];
@@ -848,7 +877,7 @@ impl Board {
                 // Don't need to check if castling into check as that is checked
                 // in legal_moves already (would be redundant)
                 for square in CASTLING_CHECKABLES[color as usize][i].active() {
-                    if self.square_attacked_by(square, attacker_color) {
+                    if self.square_attacked_by_branched(square, attacker_color) {
                         continue 'outer;
                     }
                 }
@@ -858,53 +887,21 @@ impl Board {
             }
         }
 
+        // Knight moves
+        let knights = self.bitboard(Piece::Knight, color);
+        self.append_moves_table(&mut moves, knights, &KNIGHT_MOVES);
+
         // Rook moves
-        let mut rooks = self.bitboard(Piece::Rook, color);
-        for _ in 0..rooks.0.count_ones() {
-            let i = rooks.pop_lsb();
-
-            let from = Square::ALL[i];
-            let mut targets = self.rook_moves(from);
-
-            for _ in 0..targets.0.count_ones() {
-                let j = targets.pop_lsb();
-                let to = Square::ALL[j];
-
-                moves.push(Move::new(from, to));
-            }
-        }
+        let rooks = self.bitboard(Piece::Rook, color);
+        self.append_moves_getter(&mut moves, rooks, Self::rook_moves);
 
         // Bishop moves
-        let mut bishops = self.bitboard(Piece::Bishop, color);
-        for _ in 0..bishops.0.count_ones() {
-            let i = bishops.pop_lsb();
-
-            let from = Square::ALL[i];
-            let mut targets = self.bishop_moves(from);
-
-            for _ in 0..targets.0.count_ones() {
-                let j = targets.pop_lsb();
-                let to = Square::ALL[j];
-
-                moves.push(Move::new(from, to));
-            }
-        }
+        let bishops = self.bitboard(Piece::Bishop, color);
+        self.append_moves_getter(&mut moves, bishops, Self::bishop_moves);
 
         // Queen moves
-        let mut queens = self.bitboard(Piece::Queen, color);
-        for _ in 0..queens.0.count_ones() {
-            let i = queens.pop_lsb();
-
-            let from = Square::ALL[i];
-            let mut targets = self.queen_moves(from);
-
-            for _ in 0..targets.0.count_ones() {
-                let j = targets.pop_lsb();
-                let to = Square::ALL[j];
-
-                moves.push(Move::new(from, to));
-            }
-        }
+        let queens = self.bitboard(Piece::Queen, color);
+        self.append_moves_getter(&mut moves, queens, Self::queen_moves);
 
         moves
     }
@@ -935,18 +932,17 @@ impl Board {
         let king_square =
             Square::ALL[self.bitboard(Piece::King, current_color).0.trailing_zeros() as usize];
 
-        let is_legal = !self.square_attacked_by(king_square, attacker_color);
+        let is_legal = !self.square_attacked_by_branched(king_square, attacker_color);
 
         self.unmake_move().unwrap();
 
         is_legal
     }
 
-    // ! 5 branches, but this may not be a bad thing
-    // TODO: Benchmark this function compared to its branchless version using multiple unique positions
+    // ? This function has been benchmarked against the branchless version, which was slower.
     /// Checks if a square is seen by pieces of a certain color for the
     /// purpose of legal move generation
-    pub fn square_attacked_by(&self, square: Square, attacker_color: Color) -> bool {
+    pub fn square_attacked_by_branched(&self, square: Square, attacker_color: Color) -> bool {
         let pawn_attackers = self.pawn_attacks(square, attacker_color.inverse())
             & self.bitboard(Piece::Pawn, attacker_color);
 
@@ -1099,7 +1095,7 @@ impl Board {
         Ok(())
     }
 
-    // ! 4 branches
+    // ! 4 branches, but they may be irreplaceable / too expensive to removes
     /// Unmakes a move on the board by popping the most recent move data off the stack.
     ///
     /// This function will fail if there is no piece to unmove on the To square, or if there

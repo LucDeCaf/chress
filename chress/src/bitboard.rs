@@ -7,6 +7,8 @@ use std::{
     },
 };
 
+use crate::r#move::Move;
+
 use super::square::Square;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
@@ -34,25 +36,27 @@ impl Bitboard {
         subsets
     }
 
+    /// Appends moves to a move list
+    #[inline]
+    pub fn append_moves_from(&mut self, moves: &mut Vec<Move>, from: Square) {
+        for _ in 0..self.0.count_ones() {
+            moves.push(Move::new(from, Square::ALL[self.pop_lsb() as usize]));
+        }
+    }
+
     /// Pops the least significant bit, returning its index in the bitboard.
-    pub fn pop_lsb(&mut self) -> usize {
+    pub fn pop_lsb(&mut self) -> u32 {
         let i = self.0.trailing_zeros();
         self.0 &= self.0 - 1;
-        i as usize
+        i as u32
     }
 
-    pub fn is_subset_of(&self, rhs: Bitboard) -> bool {
-        (*self & rhs) == *self
-    }
-
-    pub fn is_disjoint_to(&self, rhs: Bitboard) -> bool {
-        (*self & rhs) == Bitboard::EMPTY
-    }
-
+    #[inline]
     pub fn is_empty(&self) -> bool {
-        self.0 == 0
+        *self == Bitboard::EMPTY
     }
 
+    // ! THIS FUNCTION IS BAD, I DON'T LIKE IT, GET RID OF IT SOON
     pub fn active(&self) -> Vec<Square> {
         let mut mask = self.0;
         let mut squares = Vec::new();
@@ -78,9 +82,34 @@ impl Bitboard {
     pub fn inactive(&self) -> Vec<Square> {
         (!*self).active()
     }
+}
 
-    pub fn first_square(&self) -> Option<Square> {
-        Square::ALL.get(self.0.trailing_zeros() as usize).cloned()
+impl Iterator for Bitboard {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.is_empty() {
+            return None;
+        }
+
+        Some(Square::ALL[self.pop_lsb() as usize])
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.0.count_ones() as usize
+    }
+}
+
+impl ExactSizeIterator for Bitboard {
+    fn len(&self) -> usize {
+        self.0.count_ones() as usize
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
     }
 }
 
@@ -135,6 +164,7 @@ impl Not for Bitboard {
 
 impl Shl<Self> for Bitboard {
     type Output = Bitboard;
+    #[inline]
     fn shl(self, rhs: Self) -> Self::Output {
         Bitboard(self.0 << rhs.0)
     }
@@ -142,18 +172,21 @@ impl Shl<Self> for Bitboard {
 
 impl Shr<Self> for Bitboard {
     type Output = Bitboard;
+    #[inline]
     fn shr(self, rhs: Self) -> Self::Output {
         Bitboard(self.0 >> rhs.0)
     }
 }
 
 impl ShlAssign<Self> for Bitboard {
+    #[inline]
     fn shl_assign(&mut self, rhs: Self) {
         self.0 <<= rhs.0;
     }
 }
 
 impl ShrAssign<Self> for Bitboard {
+    #[inline]
     fn shr_assign(&mut self, rhs: Self) {
         self.0 >>= rhs.0;
     }
@@ -163,6 +196,7 @@ macro_rules! impl_bit_ops {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Bitboard {
             type Output = Bitboard;
+            #[inline]
             fn $fn(self, rhs: Self) -> Self::Output {
                 Bitboard(self.0 $ex rhs.0)
             }
@@ -173,6 +207,7 @@ macro_rules! impl_bit_ops {
 macro_rules! impl_bit_ops_assign {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Bitboard {
+            #[inline]
             fn $fn(&mut self, rhs: Self) {
                 self.0 $ex rhs.0;
             }
@@ -192,12 +227,14 @@ macro_rules! impl_shift {
     ($t:ty) => {
         impl Shl<$t> for Bitboard {
             type Output = Bitboard;
+            #[inline]
             fn shl(self, rhs: $t) -> Self::Output {
                 Bitboard(self.0 << rhs)
             }
         }
 
         impl ShlAssign<$t> for Bitboard {
+            #[inline]
             fn shl_assign(&mut self, rhs: $t) {
                 self.0 <<= rhs;
             }
@@ -205,12 +242,14 @@ macro_rules! impl_shift {
 
         impl Shr<$t> for Bitboard {
             type Output = Bitboard;
+            #[inline]
             fn shr(self, rhs: $t) -> Self::Output {
                 Bitboard(self.0 >> rhs)
             }
         }
 
         impl ShrAssign<$t> for Bitboard {
+            #[inline]
             fn shr_assign(&mut self, rhs: $t) {
                 self.0 >>= rhs;
             }

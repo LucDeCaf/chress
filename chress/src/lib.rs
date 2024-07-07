@@ -1,3 +1,5 @@
+#![feature(exact_size_is_empty)]
+
 pub mod bitboard;
 pub mod board;
 pub mod build;

@@ -12,4 +12,4 @@ opt-level = 3
 codegen-units = 1
 lto = "fat"
 panic = "abort"
-# debug = "limited" # Used for flamegraphing
+# debug = true

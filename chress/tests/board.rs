@@ -6,7 +6,8 @@ extern crate test;
 mod board_tests {
     use chress::{
         bitboard::Bitboard,
-        board::{Board, START_FEN},
+        board::{Board, POSITION_2, POSITION_3, POSITION_4, POSITION_5, START_FEN},
+        build::movemasks::KNIGHT_MOVES,
         color::Color,
         piece::Piece,
         r#move::Move,
@@ -15,10 +16,75 @@ mod board_tests {
     use rand::{thread_rng, Rng};
     use test::{black_box, Bencher};
 
-    const POSITION_2: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-    const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
-    const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-    const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    #[bench]
+    fn append_moves_fn(b: &mut Bencher) {
+        let board = {
+            let mut b = Board::new();
+            b.load_from_fen(START_FEN).unwrap();
+            b
+        };
+
+        let mut moves = Vec::new();
+        let mut color = Color::White;
+
+        b.iter(|| {
+            let pieces = board.bitboard(Piece::Knight, color);
+            board.append_moves_getter(&mut moves, pieces, Board::knight_moves);
+
+            color = color.inverse();
+        });
+    }
+
+    #[bench]
+    fn append_moves_fn_table(b: &mut Bencher) {
+        let board = {
+            let mut b = Board::new();
+            b.load_from_fen(START_FEN).unwrap();
+            b
+        };
+
+        let mut moves = Vec::new();
+        let mut color = Color::White;
+
+        b.iter(|| {
+            let pieces = board.bitboard(Piece::Knight, color);
+            board.append_moves_table(&mut moves, pieces, &KNIGHT_MOVES);
+
+            color = color.inverse();
+        });
+    }
+
+    #[bench]
+    fn append_moves_inline(b: &mut Bencher) {
+        let board = {
+            let mut b = Board::new();
+            b.load_from_fen(START_FEN).unwrap();
+            b
+        };
+
+        let mut moves = Vec::new();
+        let mut color = Color::White;
+
+        b.iter(|| {
+            let mut pieces = board.bitboard(Piece::Knight, color);
+
+            for _ in 0..pieces.0.count_ones() {
+                let i = pieces.pop_lsb();
+
+                let from = Square::ALL[i as usize];
+                let mut targets = board.knight_moves(from);
+
+                for _ in 0..targets.0.count_ones() {
+                    let j = targets.pop_lsb();
+                    let to = Square::ALL[j as usize];
+
+                    moves.push(Move::new(from, to));
+                }
+            }
+
+            color = color.inverse();
+        });
+    }
 
     // 55 ± 1
     #[bench]
@@ -37,12 +103,12 @@ mod board_tests {
             for _ in 0..knights.0.count_ones() {
                 let i = knights.pop_lsb();
 
-                let from = Square::ALL[i];
+                let from = Square::ALL[i as usize];
                 let mut targets = board.knight_moves(from);
 
                 for _ in 0..targets.0.count_ones() {
                     let j = targets.pop_lsb();
-                    let to = Square::ALL[j];
+                    let to = Square::ALL[j as usize];
 
                     moves.push(black_box(Move::new(from, to)));
                 }
@@ -52,13 +118,6 @@ mod board_tests {
         });
     }
 
-    // Returns Result<(), E>: 1000 ± 40
-    // Returns ()           : 1000 ± 60
-    //
-    // Will continue to return Results
-    //
-    // No lookup for castling rights:
-    // Lookup for castling rights   :
     #[bench]
     fn make_unmake(b: &mut Bencher) {
         let mut board = Board::new();
