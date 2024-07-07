@@ -20,6 +20,34 @@ mod board_tests {
     const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
+    // 1000 ± 40
+    #[bench]
+    fn make_unmake(b: &mut Bencher) {
+        let mut board = Board::new();
+        board.load_from_fen(POSITION_2).unwrap();
+        let moves = board.legal_moves();
+
+        b.iter(|| {
+            for r#move in moves.iter() {
+                board.make_move(*r#move).unwrap();
+                board.unmake_move().unwrap();
+            }
+        })
+    }
+
+    // Position 3
+    // - Branched: 4,600,000 ± 100,000
+    // - Branchless: 4,600,000 ± 100,000
+    //
+    // Will use branchless simply because less branching is generally good
+    #[bench]
+    fn pseudo_en_passant(b: &mut Bencher) {
+        let mut board = Board::new();
+        board.load_from_fen(POSITION_3).unwrap();
+
+        b.iter(|| board.perft(4))
+    }
+
     // 30.7 ± 1.1
     #[bench]
     fn piece_at_branched(b: &mut Bencher) {
@@ -167,12 +195,8 @@ mod board_tests {
 
         board.active_color = Color::Black;
 
-        board
-            .make_move(Move::new(Square::E7, Square::E5))
-            .unwrap();
-        board
-            .make_move(Move::new(Square::D5, Square::E6))
-            .unwrap();
+        board.make_move(Move::new(Square::E7, Square::E5)).unwrap();
+        board.make_move(Move::new(Square::D5, Square::E6)).unwrap();
 
         assert_eq!(board.move_list[0].captured_piece, None);
         assert_eq!(board.move_list[1].captured_piece, Some(Piece::Pawn));

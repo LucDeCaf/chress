@@ -667,7 +667,6 @@ impl Board {
             }
         }
 
-        // En passant
         let rank = color.inverse().en_passant_rank();
         let file = self.flags.en_passant_file_unchecked();
 
