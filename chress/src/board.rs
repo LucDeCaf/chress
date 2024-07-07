@@ -55,6 +55,22 @@ const CASTLING_DESTINATIONS: [[Square; 2]; 2] = [
         Square::C1, // Queenside
     ],
 ];
+const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
+    let mut table = [Flags::UNIVERSE; 64];
+    table[Square::A1 as usize] = Flags(!flags::masks::WHITE_QUEENSIDE.0);
+    table[Square::A8 as usize] = Flags(!flags::masks::BLACK_QUEENSIDE.0);
+    table[Square::H1 as usize] = Flags(!flags::masks::WHITE_KINGSIDE.0);
+    table[Square::H8 as usize] = Flags(!flags::masks::BLACK_KINGSIDE.0);
+    table
+};
+const ROOK_CASTLING_MOVEMASKS: [Bitboard; 64] = {
+    let mut table = [Bitboard::EMPTY; 64];
+    table[Square::G1 as usize] = Bitboard(Square::H1.bitboard().0 | Square::F1.bitboard().0);
+    table[Square::G8 as usize] = Bitboard(Square::H8.bitboard().0 | Square::F8.bitboard().0);
+    table[Square::C1 as usize] = Bitboard(Square::A1.bitboard().0 | Square::D1.bitboard().0);
+    table[Square::C8 as usize] = Bitboard(Square::A8.bitboard().0 | Square::D8.bitboard().0);
+    table
+};
 
 #[derive(Debug)]
 pub struct MakeMoveError;
@@ -909,32 +925,10 @@ impl Board {
         let is_castling = is_king_move && from.file().abs_diff(to.file()) == 2;
 
         // Move rook if necessary
-        const ROOK_CASTLING_MOVEMASKS: [Bitboard; 64] = {
-            let mut table = [Bitboard::EMPTY; 64];
-            table[Square::G1 as usize] =
-                Bitboard(Square::H1.bitboard().0 | Square::F1.bitboard().0);
-            table[Square::G8 as usize] =
-                Bitboard(Square::H8.bitboard().0 | Square::F8.bitboard().0);
-            table[Square::C1 as usize] =
-                Bitboard(Square::A1.bitboard().0 | Square::D1.bitboard().0);
-            table[Square::C8 as usize] =
-                Bitboard(Square::A8.bitboard().0 | Square::D8.bitboard().0);
-            table
-        };
-
         let rook_move_mask = ROOK_CASTLING_MOVEMASKS[to as usize];
         *self.bitboard_mut(Piece::Rook, color) ^= rook_move_mask * is_castling;
 
         // Castling rights
-        const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
-            let mut table = [Flags::UNIVERSE; 64];
-            table[Square::A1 as usize] = Flags(!flags::masks::WHITE_QUEENSIDE.0);
-            table[Square::A8 as usize] = Flags(!flags::masks::BLACK_QUEENSIDE.0);
-            table[Square::H1 as usize] = Flags(!flags::masks::WHITE_KINGSIDE.0);
-            table[Square::H8 as usize] = Flags(!flags::masks::BLACK_KINGSIDE.0);
-            table
-        };
-
         let is_rook = moved_piece == Piece::Rook;
         let reset_mask = Flags::UNIVERSE * !is_rook;
 
@@ -1003,23 +997,11 @@ impl Board {
         self.add_piece(moved_piece, color, from);
         self.remove_piece(piece_at_to, color, to);
 
-        // Undo castling
-        if moved_piece == Piece::King && from.file().abs_diff(to.file()) == 2 {
-            let (rook_from, rook_to) = match move_data.r#move {
-                Move::KS_WHITE => (Square::H1, Square::F1),
-                Move::QS_WHITE => (Square::A1, Square::D1),
-                Move::KS_BLACK => (Square::H8, Square::F8),
-                Move::QS_BLACK => (Square::A8, Square::D8),
-                _ => {
-                    return Err(UnmakeMoveError(
-                        "failed to undo double king move that isn't castling".to_owned(),
-                    ))
-                }
-            };
+        // Move rook back if undoing castling
+        let is_castling = moved_piece == Piece::King && from.file().abs_diff(to.file()) == 2;
 
-            // Move rook back
-            *self.bitboard_mut(Piece::Rook, color) ^= rook_from.bitboard() | rook_to.bitboard();
-        }
+        let rook_move_mask = ROOK_CASTLING_MOVEMASKS[to as usize];
+        *self.bitboard_mut(Piece::Rook, color) ^= rook_move_mask * is_castling;
 
         // Replace any captured pieces
         if let Some(captured_piece) = move_data.captured_piece {
