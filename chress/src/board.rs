@@ -876,19 +876,18 @@ impl Board {
         if moved_piece == Piece::Pawn {
             self.halfmoves = 0;
 
+            let is_double_move = from.rank().abs_diff(to.rank()) == 2;
+
             // Double moves (en passant mask)
-            if from.rank().abs_diff(to.rank()) == 2 {
-                // Allow en passant
-                self.flags |= flags::masks::EP_IS_VALID;
 
-                // Unset file bits
-                self.flags &= !flags::masks::EP_FILE;
+            // Unset en passant file bits if necessary
+            self.flags &= !(flags::masks::EP_FILE * is_double_move);
 
-                // Set file bits to correct file
-                self.flags.0 |= from.file() << 4;
-            }
+            // Set ep flag and ep file data correctly
+            self.flags |= (flags::masks::EP_IS_VALID | Flags(from.file() << 4)) * is_double_move;
+
             // En passant
-            else {
+            if !is_double_move {
                 let is_en_passant = if let Some(file) = self.flags.en_passant_file() {
                     let rank = color.inverse().en_passant_rank();
                     let ep_mask = Bitboard(1 << (rank * 8 + file));
@@ -975,6 +974,7 @@ impl Board {
 
         let piece_at_to: Piece;
 
+        // TODO: Try to remove branches, but honestly that seems unlikely
         let moved_piece = match promotion {
             Some(promoted_piece) => {
                 piece_at_to = promoted_piece;
