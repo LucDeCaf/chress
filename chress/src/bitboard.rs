@@ -41,7 +41,7 @@ impl Bitboard {
         let mut moves = Vec::with_capacity(targets.len());
 
         for to in targets {
-            moves.push(Move::new(from, to, None));
+            moves.push(Move::new(from, to));
         }
 
         moves

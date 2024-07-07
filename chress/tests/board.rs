@@ -168,10 +168,10 @@ mod board_tests {
         board.active_color = Color::Black;
 
         board
-            .make_move(Move::new(Square::E7, Square::E5, None))
+            .make_move(Move::new(Square::E7, Square::E5))
             .unwrap();
         board
-            .make_move(Move::new(Square::D5, Square::E6, None))
+            .make_move(Move::new(Square::D5, Square::E6))
             .unwrap();
 
         assert_eq!(board.move_list[0].captured_piece, None);
@@ -196,11 +196,11 @@ mod board_tests {
 
         assert_eq!(board_1, board_2);
 
-        let r#move = Move::new(Square::E2, Square::E4, None);
+        let r#move = Move::new(Square::E2, Square::E4);
 
         board_1.make_move(r#move).unwrap();
         board_1
-            .make_move(Move::new(Square::G8, Square::F6, None))
+            .make_move(Move::new(Square::G8, Square::F6))
             .unwrap();
         board_1.unmake_move().unwrap();
         board_1.unmake_move().unwrap();
@@ -222,7 +222,7 @@ mod board_tests {
 
         assert_eq!(board_1, board_2);
 
-        let r#move = Move::new(Square::D5, Square::E6, None);
+        let r#move = Move::new(Square::D5, Square::E6);
 
         board_1.make_move(r#move).unwrap();
         board_1.unmake_move().unwrap();

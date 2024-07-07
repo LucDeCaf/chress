@@ -15,22 +15,39 @@ pub struct Move(u16);
 impl Move {
     pub const PROMOTION_MASK: u16 = 0b0000_0000_0000_1111;
 
-    pub const KS_WHITE: Move = Move::new(Square::E1, Square::G1, None);
-    pub const QS_WHITE: Move = Move::new(Square::E1, Square::C1, None);
-    pub const KS_BLACK: Move = Move::new(Square::E8, Square::G8, None);
-    pub const QS_BLACK: Move = Move::new(Square::E8, Square::C8, None);
+    pub const KS_WHITE: Move = Move::new(Square::E1, Square::G1);
+    pub const QS_WHITE: Move = Move::new(Square::E1, Square::C1);
+    pub const KS_BLACK: Move = Move::new(Square::E8, Square::G8);
+    pub const QS_BLACK: Move = Move::new(Square::E8, Square::C8);
 
-    pub const fn new(from: Square, to: Square, promotion: Option<Piece>) -> Self {
+    pub const fn new(from: Square, to: Square) -> Self {
         let from = from as u16;
         let to = to as u16;
-        let promotion = match promotion {
-            Some(piece) => piece.promotion_mask(),
-            None => 0,
-        };
+
+        let mask = (from << 10) | (to << 4);
+
+        Self(mask)
+    }
+
+    pub const fn new_with_promotion(from: Square, to: Square, promotion: Piece) -> Self {
+        let from = from as u16;
+        let to = to as u16;
+        let promotion = promotion.promotion_mask();
 
         let mask = (from << 10) | (to << 4) | promotion;
 
         Self(mask)
+    }
+
+    pub const fn new_with_possible_promotion(
+        from: Square,
+        to: Square,
+        promotion: Option<Piece>,
+    ) -> Self {
+        match promotion {
+            Some(promotion) => Self::new_with_promotion(from, to, promotion),
+            None => Self::new(from, to),
+        }
     }
 
     pub const fn from(&self) -> Square {
@@ -230,7 +247,7 @@ impl Ord for Move {
             None => None,
         };
 
-        Self::new(
+        Self::new_with_possible_promotion(
             Square::clamp(self.from(), min.from(), max.from()),
             Square::clamp(self.to(), min.to(), max.to()),
             promotion,
@@ -289,7 +306,7 @@ impl TryFrom<&str> for Move {
             None => None,
         };
 
-        Ok(Self::new(from, to, promotion))
+        Ok(Self::new_with_possible_promotion(from, to, promotion))
     }
 }
 

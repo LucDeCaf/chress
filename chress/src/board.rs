@@ -633,12 +633,12 @@ impl Board {
 
             // Promotion
             if to.rank() % 7 == 0 {
-                moves.push(Move::new(from, to, Some(Piece::Knight)));
-                moves.push(Move::new(from, to, Some(Piece::Bishop)));
-                moves.push(Move::new(from, to, Some(Piece::Rook)));
-                moves.push(Move::new(from, to, Some(Piece::Queen)));
+                moves.push(Move::new_with_promotion(from, to, Piece::Knight));
+                moves.push(Move::new_with_promotion(from, to, Piece::Bishop));
+                moves.push(Move::new_with_promotion(from, to, Piece::Rook));
+                moves.push(Move::new_with_promotion(from, to, Piece::Queen));
             } else {
-                moves.push(Move::new(from, to, None));
+                moves.push(Move::new(from, to));
             }
         }
 
@@ -647,7 +647,7 @@ impl Board {
             let to_index = from as i8 + (16 * color.direction());
             let to = Square::try_from(to_index as usize).unwrap();
 
-            moves.push(Move::new(from, to, None));
+            moves.push(Move::new(from, to));
         }
 
         // Captures
@@ -657,12 +657,12 @@ impl Board {
             // Promotion
             for to in captures.active() {
                 if to.rank() % 7 == 0 {
-                    moves.push(Move::new(from, to, Some(Piece::Knight)));
-                    moves.push(Move::new(from, to, Some(Piece::Bishop)));
-                    moves.push(Move::new(from, to, Some(Piece::Rook)));
-                    moves.push(Move::new(from, to, Some(Piece::Queen)));
+                    moves.push(Move::new_with_promotion(from, to, Piece::Knight));
+                    moves.push(Move::new_with_promotion(from, to, Piece::Bishop));
+                    moves.push(Move::new_with_promotion(from, to, Piece::Rook));
+                    moves.push(Move::new_with_promotion(from, to, Piece::Queen));
                 } else {
-                    moves.push(Move::new(from, to, None));
+                    moves.push(Move::new(from, to));
                 }
             }
         }
@@ -677,7 +677,7 @@ impl Board {
                 self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
 
             for from in pawns_that_can_take.active() {
-                moves.push(Move::new(from, ep_square, None));
+                moves.push(Move::new(from, ep_square));
             }
         }
 
@@ -727,7 +727,7 @@ impl Board {
                 }
 
                 // Add castling as pseudolegal move
-                moves.push(Move::new(king_square, targets[i], None));
+                moves.push(Move::new(king_square, targets[i]));
             }
         }
 
