@@ -1014,10 +1014,12 @@ impl Board {
             let is_en_passant = move_data.flags.en_passant_valid() && ep_mask == to.bitboard();
 
             let square = if is_en_passant {
-                match color {
-                    Color::White => ep_mask >>= 8,
-                    Color::Black => ep_mask <<= 8,
-                }
+                let is_white = color == Color::White;
+
+                let shl = (ep_mask << 8) * !is_white;
+                let shr = (ep_mask >> 8) * is_white;
+
+                ep_mask = shl | shr;
 
                 Square::ALL[ep_mask.0.trailing_zeros() as usize]
             } else {
