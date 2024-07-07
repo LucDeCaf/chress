@@ -14,38 +14,7 @@ mod bitboard_tests {
         r#move::Move,
         square::Square,
     };
-    use rand::{thread_rng, Rng};
     use test::Bencher;
-
-    #[bench]
-    fn looped_bits_zero(b: &mut Bencher) {
-        let bb = Bitboard(0);
-
-        b.iter(|| {
-            let mut count = 0;
-
-            for sq in bb.into_iter() {
-                count += black_box(sq as u8);
-            }
-
-            black_box(count)
-        });
-    }
-
-    #[bench]
-    fn looped_bits_max(b: &mut Bencher) {
-        let bb = Bitboard(u64::MAX);
-
-        b.iter(|| {
-            let mut count = 0;
-
-            for sq in bb.into_iter() {
-                count += black_box(sq as u8);
-            }
-
-            black_box(count)
-        });
-    }
 
     #[bench]
     fn manual_bits_zero(b: &mut Bencher) {

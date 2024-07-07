@@ -84,35 +84,6 @@ impl Bitboard {
     }
 }
 
-impl Iterator for Bitboard {
-    type Item = Square;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.is_empty() {
-            return None;
-        }
-
-        Some(Square::ALL[self.pop_lsb() as usize])
-    }
-
-    fn count(self) -> usize
-    where
-        Self: Sized,
-    {
-        self.0.count_ones() as usize
-    }
-}
-
-impl ExactSizeIterator for Bitboard {
-    fn len(&self) -> usize {
-        self.0.count_ones() as usize
-    }
-
-    fn is_empty(&self) -> bool {
-        self.is_empty()
-    }
-}
-
 impl Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut lines = vec![String::with_capacity(8); 8];
