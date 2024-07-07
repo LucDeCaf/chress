@@ -2,8 +2,8 @@ use core::fmt;
 use std::{
     fmt::Display,
     ops::{
-        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Shl, ShlAssign, Shr,
-        ShrAssign,
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Not, Shl, ShlAssign,
+        Shr, ShrAssign,
     },
 };
 
@@ -129,6 +129,13 @@ impl Display for Bitboard {
         }
 
         write!(f, "{}", buf)
+    }
+}
+
+impl Mul<bool> for Bitboard {
+    type Output = Bitboard;
+    fn mul(self, rhs: bool) -> Self::Output {
+        Bitboard(self.0 * rhs as u64)
     }
 }
 

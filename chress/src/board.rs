@@ -901,25 +901,29 @@ impl Board {
         }
 
         // Special king moves
-        if moved_piece == Piece::King {
-            // Castling
-            if from.file().abs_diff(to.file()) == 2 {
-                // Get relevant castling data and set relevant castling rights
-                let (rook_from, rook_to) = match r#move {
-                    Move::KS_WHITE => (Square::H1, Square::F1),
-                    Move::QS_WHITE => (Square::A1, Square::D1),
-                    Move::KS_BLACK => (Square::H8, Square::F8),
-                    Move::QS_BLACK => (Square::A8, Square::D8),
-                    _ => return Err(MakeMoveError),
-                };
+        let is_king_move = moved_piece == Piece::King;
 
-                // Move rook
-                *self.bitboard_mut(Piece::Rook, color) ^= rook_from.bitboard() | rook_to.bitboard();
-            }
+        // Remove castling rights
+        self.flags &= !(Flags(0b0000_0011 << (color as u8 * 2)) * is_king_move);
 
-            // Remove castling rights
-            self.flags.0 &= !(0b0000_0011 << (color as u8 * 2));
-        }
+        let is_castling = is_king_move && from.file().abs_diff(to.file()) == 2;
+
+        // Move rook if necessary
+        const ROOK_CASTLING_MOVEMASKS: [Bitboard; 64] = {
+            let mut table = [Bitboard::EMPTY; 64];
+            table[Square::G1 as usize] =
+                Bitboard(Square::H1.bitboard().0 | Square::F1.bitboard().0);
+            table[Square::G8 as usize] =
+                Bitboard(Square::H8.bitboard().0 | Square::F8.bitboard().0);
+            table[Square::C1 as usize] =
+                Bitboard(Square::A1.bitboard().0 | Square::D1.bitboard().0);
+            table[Square::C8 as usize] =
+                Bitboard(Square::A8.bitboard().0 | Square::D8.bitboard().0);
+            table
+        };
+
+        let rook_move_mask = ROOK_CASTLING_MOVEMASKS[to as usize];
+        *self.bitboard_mut(Piece::Rook, color) ^= rook_move_mask * is_castling;
 
         // Castling rights
         const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
