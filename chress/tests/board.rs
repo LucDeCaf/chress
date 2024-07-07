@@ -7,18 +7,74 @@ mod board_tests {
     use chress::{
         bitboard::Bitboard,
         board::{Board, START_FEN},
+        build::movemasks::KNIGHT_MOVES,
         color::Color,
         piece::Piece,
         r#move::Move,
         square::Square,
     };
     use rand::{thread_rng, Rng};
-    use test::Bencher;
+    use test::{black_box, Bencher};
 
     const POSITION_2: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
     const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
     const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+
+    // 380 ± 30
+    #[bench]
+    fn moves_from_func(b: &mut Bencher) {
+        let mut board = Board::new();
+        board.load_from_fen(POSITION_2).unwrap();
+
+        let mut color = Color::White;
+
+        // Assign large arbitraty capacity to reduce chance of allocation taking up time
+        let mut moves: Vec<Move> = Vec::with_capacity(2048);
+
+        b.iter(|| {
+            // Knight moves
+            let knights = board.bitboard(Piece::Knight, Color::White);
+            for from in knights.active() {
+                moves.append(&mut board.knight_moves(from).moves_from(from));
+            }
+
+            color = color.inverse()
+        });
+    }
+
+    // 21 ± 20
+    // Gawd DAYUM I just found a bottleneck, thanks flamegraph
+    #[bench]
+    fn moves_from_integrated(b: &mut Bencher) {
+        let mut board = Board::new();
+        board.load_from_fen(POSITION_2).unwrap();
+
+        let mut color = Color::White;
+
+        // Assign large arbitraty capacity to reduce chance of allocation taking up time
+        let mut moves: Vec<Move> = Vec::with_capacity(2048);
+
+        b.iter(|| {
+            // Knight moves
+            let mut knights = board.bitboard(Piece::Knight, Color::White);
+            for _ in 0..knights.0.count_ones() {
+                let i = knights.pop_lsb();
+
+                let from = Square::ALL[i];
+                let mut targets = KNIGHT_MOVES[i];
+
+                for _ in 0..targets.0.count_ones() {
+                    let j = targets.pop_lsb();
+                    let to = Square::ALL[j];
+
+                    moves.push(black_box(Move::new(from, to)));
+                }
+            }
+
+            color = color.inverse()
+        });
+    }
 
     // Returns Result<(), E>: 1000 ± 40
     // Returns ()           : 1000 ± 60

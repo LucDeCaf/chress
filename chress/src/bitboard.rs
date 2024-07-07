@@ -48,10 +48,10 @@ impl Bitboard {
     }
 
     /// Pops the least significant bit, returning its index in the bitboard.
-    pub fn pop_lsb(&mut self) -> u32 {
+    pub fn pop_lsb(&mut self) -> usize {
         let i = self.0.trailing_zeros();
         self.0 &= self.0 - 1;
-        i
+        i as usize
     }
 
     pub fn is_subset_of(&self, rhs: Bitboard) -> bool {
