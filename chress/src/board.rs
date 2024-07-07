@@ -580,10 +580,12 @@ impl Board {
         PIECES[piece_at_square_index]
     }
 
+    #[inline]
     pub fn white_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty >> 8) & self.bitboard(Piece::Pawn, Color::White)
     }
 
+    #[inline]
     pub fn black_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty << 8) & self.bitboard(Piece::Pawn, Color::Black)
     }
@@ -600,6 +602,7 @@ impl Board {
         self.black_pawns_able_to_push(empty_in_rank_6)
     }
 
+    // TODO: Use less heap allocation here
     pub fn white_bitboards(&self) -> Vec<Bitboard> {
         self.piece_bitboards[6..12].to_vec()
     }
@@ -634,40 +637,48 @@ impl Board {
         mask
     }
 
+    #[inline]
     pub fn empty(&self) -> Bitboard {
         !(self.friendly_pieces() | self.enemy_pieces())
     }
 
     /// Squares seen by a rook on square
+    #[inline]
     pub fn rook_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.rook_move_table[magic_index(&ROOK_MAGICS[square as usize], blockers)]
     }
 
     /// Squares seen by a bishop on square
+    #[inline]
     pub fn bishop_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.bishop_move_table[magic_index(&BISHOP_MAGICS[square as usize], blockers)]
     }
 
     /// Squares seen by a queen on square
+    #[inline]
     pub fn queen_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.rook_attacks(square, blockers) | self.bishop_attacks(square, blockers)
     }
 
     /// Squares seen by a pawn on square
+    #[inline]
     pub fn pawn_attacks(&self, square: Square, color: Color) -> Bitboard {
         PAWN_CAPTURES[color as usize][square as usize]
     }
 
     /// Squares seen by a knight on square
+    #[inline]
     pub fn knight_attacks(square: Square) -> Bitboard {
         KNIGHT_MOVES[square as usize]
     }
 
     // Squares seen by a king on square
+    #[inline]
     pub fn king_attacks(square: Square) -> Bitboard {
         KING_MOVES[square as usize]
     }
 
+    #[inline]
     pub fn rook_moves(&self, square: Square) -> Bitboard {
         let friendly_pieces = self.friendly_pieces();
         let enemy_pieces = self.enemy_pieces();
@@ -675,6 +686,7 @@ impl Board {
         self.rook_attacks(square, friendly_pieces | enemy_pieces) & !friendly_pieces
     }
 
+    #[inline]
     pub fn bishop_moves(&self, square: Square) -> Bitboard {
         let friendly = self.friendly_pieces();
         let enemy = self.enemy_pieces();
@@ -682,6 +694,7 @@ impl Board {
         self.bishop_attacks(square, friendly | enemy) & !friendly
     }
 
+    #[inline]
     pub fn queen_moves(&self, square: Square) -> Bitboard {
         let friendly_pieces = self.friendly_pieces();
         let enemy_pieces = self.enemy_pieces();
@@ -692,10 +705,12 @@ impl Board {
         attacks & !friendly_pieces
     }
 
+    #[inline]
     pub fn knight_moves(&self, square: Square) -> Bitboard {
         Self::knight_attacks(square) & !self.friendly_pieces()
     }
 
+    #[inline]
     pub fn king_moves(&self, square: Square) -> Bitboard {
         Self::king_attacks(square) & !self.friendly_pieces()
     }
@@ -912,9 +927,7 @@ impl Board {
     /// move is made and unmade on the board before checking if the king
     /// is under attack.
     pub fn legal_moves(&mut self) -> Vec<Move> {
-        let pseudolegal_moves = self.pseudolegal_moves();
-
-        pseudolegal_moves
+        self.pseudolegal_moves()
             .into_iter()
             .filter(|r#move| self.is_legal_move(*r#move))
             .collect()

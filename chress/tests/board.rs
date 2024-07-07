@@ -17,6 +17,14 @@ mod board_tests {
     use test::{black_box, Bencher};
 
     #[bench]
+    fn legal_moves(b: &mut Bencher) {
+        let mut board = Board::new();
+        board.load_from_fen(POSITION_2).unwrap();
+
+        b.iter(|| black_box(board.legal_moves()));
+    }
+
+    #[bench]
     fn append_moves_fn(b: &mut Bencher) {
         let board = {
             let mut b = Board::new();

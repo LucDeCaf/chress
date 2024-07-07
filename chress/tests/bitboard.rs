@@ -40,7 +40,7 @@ mod bitboard_tests {
                 let mut count = black_box(0);
 
                 for _ in black_box(0..bb.0.count_ones()) {
-                    black_box(count += Square::ALL[bb.pop_lsb() as usize] as u8);
+                    black_box(count += Square::ALL[bb.pop_lsb() as usize] as u32);
                 }
 
                 black_box(count);
