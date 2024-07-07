@@ -70,6 +70,10 @@ impl Bitboard {
         let mut mask = self.0;
         let mut squares = Vec::new();
 
+        if self.is_empty() {
+            return Vec::new();
+        }
+
         for square in Square::ALL {
             if mask & 1 == 1 {
                 squares.push(square);

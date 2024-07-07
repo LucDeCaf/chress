@@ -644,8 +644,8 @@ impl Board {
 
         // Double moves
         for from in double_push_froms.active() {
-            let to_index = from as i8 + (16 * color.direction());
-            let to = Square::try_from(to_index as usize).unwrap();
+            let to_index = from as isize + (16 * color.direction()) as isize;
+            let to = Square::ALL[to_index as usize];
 
             moves.push(Move::new(from, to));
         }
@@ -668,17 +668,22 @@ impl Board {
         }
 
         // En passant
-        if let Some(file) = self.flags.en_passant_file() {
-            let rank = color.inverse().en_passant_rank();
+        let rank = color.inverse().en_passant_rank();
+        let file = self.flags.en_passant_file_unchecked();
 
-            let ep_square = Square::ALL[(rank * 8 + file) as usize];
+        let ep_square = Square::ALL[(rank * 8 + file) as usize];
 
-            let pawns_that_can_take =
-                self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
+        let can_en_passant = self.flags.en_passant_valid();
 
-            for from in pawns_that_can_take.active() {
-                moves.push(Move::new(from, ep_square));
-            }
+        // Apply the inverse of this mask if can't en passant to remove the
+        // possibility that any pawns will be found
+        let block_mask = Bitboard(Bitboard::UNIVERSE.0 * !can_en_passant as u64);
+
+        let pawns_that_can_take =
+            self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
+
+        for from in (pawns_that_can_take & !block_mask).active() {
+            moves.push(Move::new(from, ep_square));
         }
 
         // Knight moves
