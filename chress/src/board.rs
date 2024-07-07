@@ -704,22 +704,39 @@ impl Board {
         }
 
         // Knight moves
-        let knights = self.bitboard(Piece::Knight, color);
-        for from in knights.active() {
-            moves.append(&mut self.knight_moves(from).moves_from(from));
+        let mut knights = self.bitboard(Piece::Knight, color);
+        for _ in 0..knights.0.count_ones() {
+            let i = knights.pop_lsb();
+
+            let from = Square::ALL[i];
+            let mut targets = self.knight_moves(from);
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j];
+
+                moves.push(Move::new(from, to));
+            }
         }
 
         // King moves
-        let kings = self.bitboard(Piece::King, color);
-        for from in kings.active() {
-            moves.append(&mut self.king_moves(from).moves_from(from));
+        let king_index = self.bitboard(Piece::King, color).0.trailing_zeros() as usize;
+        let king_square = Square::ALL[king_index];
+
+        let mut targets = self.king_moves(king_square);
+
+        for _ in 0..targets.0.count_ones() {
+            let i = targets.pop_lsb();
+            let to = Square::ALL[i];
+
+            moves.push(Move::new(king_square, to));
         }
 
         // Castling
         // Check if king is on start square and not in check
-        let king_square = KING_STARTING_SQUARES[color as usize];
-        let on_start_square = !(kings & king_square.bitboard()).is_empty();
-        let in_check = self.square_attacked_by(king_square, attacker_color);
+        let king_start_square = KING_STARTING_SQUARES[color as usize];
+        let on_start_square = king_square == king_start_square;
+        let in_check = self.square_attacked_by(king_start_square, attacker_color);
 
         if on_start_square && !in_check {
             let blocker_list = CASTLING_BLOCKERS[color as usize];
@@ -749,26 +766,56 @@ impl Board {
                 }
 
                 // Add castling as pseudolegal move
-                moves.push(Move::new(king_square, targets[i]));
+                moves.push(Move::new(king_start_square, targets[i]));
             }
         }
 
         // Rook moves
-        let rooks = self.bitboard(Piece::Rook, color);
-        for from in rooks.active() {
-            moves.append(&mut self.rook_moves(from).moves_from(from));
+        let mut rooks = self.bitboard(Piece::Rook, color);
+        for _ in 0..rooks.0.count_ones() {
+            let i = rooks.pop_lsb();
+
+            let from = Square::ALL[i];
+            let mut targets = self.rook_moves(from);
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j];
+
+                moves.push(Move::new(from, to));
+            }
         }
 
         // Bishop moves
-        let bishops = self.bitboard(Piece::Bishop, color);
-        for from in bishops.active() {
-            moves.append(&mut self.bishop_moves(from).moves_from(from));
+        let mut bishops = self.bitboard(Piece::Bishop, color);
+        for _ in 0..bishops.0.count_ones() {
+            let i = bishops.pop_lsb();
+
+            let from = Square::ALL[i];
+            let mut targets = self.bishop_moves(from);
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j];
+
+                moves.push(Move::new(from, to));
+            }
         }
 
         // Queen moves
-        let queens = self.bitboard(Piece::Queen, color);
-        for from in queens.active() {
-            moves.append(&mut self.queen_moves(from).moves_from(from));
+        let mut queens = self.bitboard(Piece::Queen, color);
+        for _ in 0..queens.0.count_ones() {
+            let i = queens.pop_lsb();
+
+            let from = Square::ALL[i];
+            let mut targets = self.queen_moves(from);
+
+            for _ in 0..targets.0.count_ones() {
+                let j = targets.pop_lsb();
+                let to = Square::ALL[j];
+
+                moves.push(Move::new(from, to));
+            }
         }
 
         moves

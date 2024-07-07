@@ -34,19 +34,6 @@ impl Bitboard {
         subsets
     }
 
-    /// Returns a list containing one move for each active bit in the mask.
-    pub fn moves_from(&self, from: Square) -> Vec<Move> {
-        let targets = self.active();
-
-        let mut moves = Vec::with_capacity(targets.len());
-
-        for to in targets {
-            moves.push(Move::new(from, to));
-        }
-
-        moves
-    }
-
     /// Pops the least significant bit, returning its index in the bitboard.
     pub fn pop_lsb(&mut self) -> usize {
         let i = self.0.trailing_zeros();

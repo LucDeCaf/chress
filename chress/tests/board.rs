@@ -21,30 +21,7 @@ mod board_tests {
     const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
-    // 380 ± 30
-    #[bench]
-    fn moves_from_func(b: &mut Bencher) {
-        let mut board = Board::new();
-        board.load_from_fen(POSITION_2).unwrap();
-
-        let mut color = Color::White;
-
-        // Assign large arbitraty capacity to reduce chance of allocation taking up time
-        let mut moves: Vec<Move> = Vec::with_capacity(2048);
-
-        b.iter(|| {
-            // Knight moves
-            let knights = board.bitboard(Piece::Knight, Color::White);
-            for from in knights.active() {
-                moves.append(&mut board.knight_moves(from).moves_from(from));
-            }
-
-            color = color.inverse()
-        });
-    }
-
-    // 21 ± 20
-    // Gawd DAYUM I just found a bottleneck, thanks flamegraph
+    // 55 ± 1
     #[bench]
     fn moves_from_integrated(b: &mut Bencher) {
         let mut board = Board::new();
@@ -62,7 +39,7 @@ mod board_tests {
                 let i = knights.pop_lsb();
 
                 let from = Square::ALL[i];
-                let mut targets = KNIGHT_MOVES[i];
+                let mut targets = board.knight_moves(from);
 
                 for _ in 0..targets.0.count_ones() {
                     let j = targets.pop_lsb();
