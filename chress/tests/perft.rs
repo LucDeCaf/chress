@@ -22,8 +22,7 @@ pub mod perft_tests {
     // ? Current speeds (5): ~21,000,000 nodes/sec
     #[test]
     fn perft_kiwipete() {
-        let mut board = Board::new();
-        board.load_from_fen(POSITION_2).unwrap();
+        let mut board = Board::from_fen(POSITION_2).unwrap();
 
         let now = time::Instant::now();
 

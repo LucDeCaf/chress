@@ -12,8 +12,7 @@ use chress::{
 use chress_cli::{perft, uci};
 
 fn main() -> std::io::Result<()> {
-    let mut board = Board::new();
-    board.load_from_fen(START_FEN).unwrap();
+    let mut board = Board::default();
 
     let mut input = String::new();
 
@@ -31,7 +30,6 @@ fn main() -> std::io::Result<()> {
             let arguments = iter.map(|s| s.trim()).collect::<Vec<&str>>();
 
             match command {
-                "reset" => board = Board::new(),
                 "startpos" => board.load_from_fen(START_FEN).unwrap(),
                 "load" => {
                     if arguments[0] == "fen" {

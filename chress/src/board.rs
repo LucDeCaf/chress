@@ -161,7 +161,7 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             piece_bitboards: [Bitboard::EMPTY; 12],
 

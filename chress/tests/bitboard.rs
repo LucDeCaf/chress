@@ -50,8 +50,7 @@ mod bitboard_tests {
 
     #[bench]
     fn append_moves_from_fn(b: &mut Bencher) {
-        let mut board = Board::new();
-        board.load_from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(POSITION_2).unwrap();
 
         let mut moves = Vec::new();
 
@@ -71,8 +70,7 @@ mod bitboard_tests {
 
     #[bench]
     fn append_moves_from_inlined(b: &mut Bencher) {
-        let mut board = Board::new();
-        board.load_from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(POSITION_2).unwrap();
 
         let mut moves = Vec::new();
 

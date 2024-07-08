@@ -74,7 +74,7 @@ fn process_command(command: &Command, board: &mut Board) -> Option<String> {
         Command::SetOption(_name, _value) => None,
         Command::IsReady => Some(String::from("readyok")),
         Command::UciNewGame => {
-            *board = Board::new();
+            *board = Board::default();
             Some(String::from("readyok"))
         }
         Command::Position(moves) => {
