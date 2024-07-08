@@ -1,5 +1,5 @@
 [workspace]
-members = ["chress", "chress-cli"]
+members = ["chress", "chress-cli", "chress-engine"]
 resolver = "2"
 
 [profile.test]

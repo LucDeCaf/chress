@@ -23,6 +23,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "chress-engine"
+version = "0.1.0"
+dependencies = [
+ "chress",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"

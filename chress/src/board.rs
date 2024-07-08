@@ -132,6 +132,7 @@ pub enum ParseFenError {
     BadHalfmoves,
     BadFullmoves,
     WrongSectionCount,
+    InvalidPosition,
 }
 
 impl Display for ParseFenError {
@@ -226,6 +227,14 @@ impl Board {
             }
         }
 
+        // Check for kings
+        if self.bitboard(Piece::King, Color::White).0.count_ones() != 1 {
+            return Err(ParseFenError::InvalidPosition);
+        }
+        if self.bitboard(Piece::King, Color::Black).0.count_ones() != 1 {
+            return Err(ParseFenError::InvalidPosition);
+        }
+
         let Some(active_color) = sections.next() else {
             return Err(ParseFenError::WrongSectionCount);
         };
@@ -235,6 +244,14 @@ impl Board {
             "b" => Color::Black,
             _ => return Err(ParseFenError::BadColor),
         };
+
+        let enemy_king_index = self.bitboard(Piece::King, self.active_color.inverse()).0.trailing_zeros();
+        let enemy_king_square = Square::ALL[enemy_king_index as usize];
+
+        // If can capture opponent's king, position is invalid
+        if self.square_attacked_by(enemy_king_square, self.active_color) {
+            return Err(ParseFenError::InvalidPosition);
+        }
 
         let Some(castling_rights) = sections.next() else {
             return Err(ParseFenError::WrongSectionCount);
@@ -256,6 +273,7 @@ impl Board {
             return Err(ParseFenError::WrongSectionCount);
         };
 
+        // TODO: Implement checks to prevent invalid en passant squares
         if en_passant != "-" {
             // Allow en passant
             self.flags |= Flags::EP_IS_VALID;
