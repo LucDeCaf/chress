@@ -141,16 +141,16 @@ impl Error for ParseFenError {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Board {
-    pub piece_bitboards: [Bitboard; 12],
+    piece_bitboards: [Bitboard; 12],
 
-    pub active_color: Color,
+    active_color: Color,
 
-    pub flags: Flags,
+    flags: Flags,
 
-    pub move_list: Vec<MoveData>,
+    move_list: Vec<MoveData>,
 
-    pub halfmoves: u32,
-    pub fullmoves: u32,
+    halfmoves: u32,
+    fullmoves: u32,
 
     rook_move_table: Vec<Bitboard>,
     bishop_move_table: Vec<Bitboard>,
@@ -400,6 +400,22 @@ impl Board {
         fen
     }
 
+    pub fn halfmoves(&self) -> u32 {
+        self.halfmoves
+    }
+
+    pub fn fullmoves(&self) -> u32 {
+        self.fullmoves
+    }
+
+    pub fn current_color(&self) -> Color {
+        self.active_color
+    }
+
+    pub fn flip_color(&mut self) {
+        self.active_color = self.active_color.inverse();
+    }
+
     pub fn perft(&mut self, depth: usize) -> u64 {
         let mut results = 0;
 
@@ -516,7 +532,7 @@ impl Board {
         results.load(Ordering::Relaxed)
     }
 
-    pub fn clear_bitboards(&mut self) {
+    fn clear_bitboards(&mut self) {
         for bb in &mut self.piece_bitboards {
             bb.0 = 0;
         }
@@ -526,19 +542,19 @@ impl Board {
         self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
-    pub fn bitboard_mut(&mut self, piece: Piece, color: Color) -> &mut Bitboard {
+    fn bitboard_mut(&mut self, piece: Piece, color: Color) -> &mut Bitboard {
         &mut self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
-    pub fn bitboard_index(piece: Piece, color: Color) -> usize {
+    fn bitboard_index(piece: Piece, color: Color) -> usize {
         piece as usize + (color as usize * 6)
     }
 
-    pub fn add_piece(&mut self, piece: Piece, color: Color, square: Square) {
+    fn add_piece(&mut self, piece: Piece, color: Color, square: Square) {
         *self.bitboard_mut(piece, color) |= square.bitboard();
     }
 
-    pub fn remove_piece(&mut self, piece: Piece, color: Color, square: Square) {
+    fn remove_piece(&mut self, piece: Piece, color: Color, square: Square) {
         *self.bitboard_mut(piece, color) &= !square.bitboard();
     }
 
@@ -595,21 +611,21 @@ impl Board {
         PIECES[piece_at_square_index]
     }
 
-    pub fn white_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
+    fn white_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty >> 8) & self.bitboard(Piece::Pawn, Color::White)
     }
 
-    pub fn black_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
+    fn black_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty << 8) & self.bitboard(Piece::Pawn, Color::Black)
     }
 
-    pub fn white_pawns_able_to_double_push(&self, empty: Bitboard) -> Bitboard {
+    fn white_pawns_able_to_double_push(&self, empty: Bitboard) -> Bitboard {
         const RANK_4: Bitboard = Bitboard(0x00000000FF000000);
         let empty_in_rank_3 = ((empty & RANK_4) >> 8) & empty;
         self.white_pawns_able_to_push(empty_in_rank_3)
     }
 
-    pub fn black_pawns_able_to_double_push(&self, empty: Bitboard) -> Bitboard {
+    fn black_pawns_able_to_double_push(&self, empty: Bitboard) -> Bitboard {
         const RANK_5: Bitboard = Bitboard(0x000000FF00000000);
         let empty_in_rank_6 = ((empty & RANK_5) << 8) & empty;
         self.black_pawns_able_to_push(empty_in_rank_6)
@@ -689,7 +705,7 @@ impl Board {
     }
 
     /// Used with sliding pieces
-    pub fn append_moves_getter(
+    fn append_moves_getter(
         &self,
         moves: &mut Vec<Move>,
         mut pieces: Bitboard,
@@ -711,7 +727,7 @@ impl Board {
     }
 
     /// Used with non-sliding pieces as it showed significant performance gains
-    pub fn append_moves_table(
+    fn append_moves_table(
         &self,
         moves: &mut Vec<Move>,
         mut pieces: Bitboard,

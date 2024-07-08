@@ -4,10 +4,7 @@ use std::{io::stdin, process::Command};
 
 use chress::{
     board::{Board, START_FEN},
-    color::Color,
-    piece::Piece,
     r#move::Move,
-    square::Square,
 };
 use chress_cli::{perft, uci};
 
@@ -54,57 +51,6 @@ fn main() -> std::io::Result<()> {
                         Command::new("clear")
                             .spawn()
                             .expect("Failed to clear screen");
-                    }
-                }
-
-                "add" => {
-                    let Some(piece_str) = arguments.first().cloned() else {
-                        println!("Missing arguments for 'add'");
-                        break;
-                    };
-
-                    if piece_str.len() != 1 {
-                        println!("Invalid argument for add '{piece_str}'");
-                        break;
-                    }
-
-                    let Ok(piece) = Piece::try_from(piece_str.chars().next().unwrap()) else {
-                        println!("Invalid argument for add '{piece_str}'");
-                        break;
-                    };
-
-                    let color = if piece_str.to_uppercase() == piece_str {
-                        Color::White
-                    } else {
-                        Color::Black
-                    };
-
-                    let Some(square) = arguments.get(1).cloned() else {
-                        println!("Missing arguments for 'add'");
-                        break;
-                    };
-
-                    let Ok(square) = Square::try_from(square) else {
-                        println!("Invalid argument for 'add'");
-                        break;
-                    };
-
-                    board.add_piece(piece, color, square);
-                }
-
-                "rm" => {
-                    let Some(square) = arguments.first().cloned() else {
-                        println!("Missing arguments for 'rm'");
-                        break;
-                    };
-
-                    let Ok(square) = Square::try_from(square) else {
-                        println!("Invalid argument for 'rm'");
-                        break;
-                    };
-
-                    for bb in board.piece_bitboards.iter_mut() {
-                        *bb &= !square.bitboard();
                     }
                 }
 
@@ -155,10 +101,6 @@ fn main() -> std::io::Result<()> {
                             break;
                         }
                     }
-                }
-
-                "dbg" => {
-                    println!("Flags: {:08b}", board.flags.0);
                 }
 
                 _ => {
