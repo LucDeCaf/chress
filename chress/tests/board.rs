@@ -17,6 +17,26 @@ mod board_tests {
     use test::{black_box, Bencher};
 
     #[bench]
+    fn friendly_pieces_offset(b: &mut Bencher) {
+        let mut board = Board::default();
+
+        b.iter(black_box(|| {
+            board.friendly_pieces();
+            board.active_color = board.active_color.inverse();
+        }))
+    }
+
+    #[bench]
+    fn enemy_pieces_offset(b: &mut Bencher) {
+        let mut board = Board::default();
+
+        b.iter(black_box(|| {
+            board.enemy_pieces();
+            board.active_color = board.active_color.inverse();
+        }))
+    }
+
+    #[bench]
     fn legal_moves(b: &mut Bencher) {
         let mut board = Board::new();
         board.load_from_fen(POSITION_2).unwrap();

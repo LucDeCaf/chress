@@ -499,17 +499,14 @@ impl Board {
         }
     }
 
-    #[inline]
     pub fn bitboard(&self, piece: Piece, color: Color) -> Bitboard {
         self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
-    #[inline]
     pub fn bitboard_mut(&mut self, piece: Piece, color: Color) -> &mut Bitboard {
         &mut self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
-    #[inline]
     pub fn bitboard_index(piece: Piece, color: Color) -> usize {
         piece as usize + (color as usize * 6)
     }
@@ -523,11 +520,7 @@ impl Board {
     }
 
     pub fn occupied(&self) -> Bitboard {
-        let mut mask = Bitboard::EMPTY;
-        for bb in self.piece_bitboards {
-            mask |= bb;
-        }
-        mask
+        self.white_pieces() | self.black_pieces()
     }
 
     pub fn white_pieces(&self) -> Bitboard {
@@ -579,12 +572,10 @@ impl Board {
         PIECES[piece_at_square_index]
     }
 
-    #[inline]
     pub fn white_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty >> 8) & self.bitboard(Piece::Pawn, Color::White)
     }
 
-    #[inline]
     pub fn black_pawns_able_to_push(&self, empty: Bitboard) -> Bitboard {
         (empty << 8) & self.bitboard(Piece::Pawn, Color::Black)
     }
@@ -601,60 +592,43 @@ impl Board {
         self.black_pawns_able_to_push(empty_in_rank_6)
     }
 
-    // TODO: Use less heap allocation here
-    pub fn white_bitboards(&self) -> Vec<Bitboard> {
-        self.piece_bitboards[6..12].to_vec()
-    }
-
-    pub fn black_bitboards(&self) -> Vec<Bitboard> {
-        self.piece_bitboards[0..6].to_vec()
-    }
-
-    pub fn friendly_bitboards(&self) -> Vec<Bitboard> {
-        let offset = self.active_color as usize * 6;
-        self.piece_bitboards[offset..offset + 6].to_vec()
-    }
-
-    pub fn enemy_bitboards(&self) -> Vec<Bitboard> {
-        let offset = self.active_color.inverse() as usize * 6;
-        self.piece_bitboards[offset..offset + 6].to_vec()
-    }
-
     pub fn friendly_pieces(&self) -> Bitboard {
-        let mut mask = Bitboard::EMPTY;
-        for bb in self.friendly_bitboards() {
-            mask |= bb;
-        }
-        mask
+        let off = self.active_color as usize * 6;
+
+        self.piece_bitboards[off]
+            | self.piece_bitboards[off + 1]
+            | self.piece_bitboards[off + 2]
+            | self.piece_bitboards[off + 3]
+            | self.piece_bitboards[off + 4]
+            | self.piece_bitboards[off + 5]
     }
 
     pub fn enemy_pieces(&self) -> Bitboard {
-        let mut mask = Bitboard::EMPTY;
-        for bb in self.enemy_bitboards() {
-            mask |= bb;
-        }
-        mask
+        let off = self.active_color as usize * 6;
+
+        self.piece_bitboards[6 - off]
+            | self.piece_bitboards[7 - off]
+            | self.piece_bitboards[8 - off]
+            | self.piece_bitboards[9 - off]
+            | self.piece_bitboards[10 - off]
+            | self.piece_bitboards[11 - off]
     }
 
-    #[inline]
     pub fn empty(&self) -> Bitboard {
-        !(self.friendly_pieces() | self.enemy_pieces())
+        !self.occupied()
     }
 
     /// Squares seen by a rook on square
-    #[inline]
     pub fn rook_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.rook_move_table[magic_index(&ROOK_MAGICS[square as usize], blockers)]
     }
 
     /// Squares seen by a bishop on square
-    #[inline]
     pub fn bishop_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.bishop_move_table[magic_index(&BISHOP_MAGICS[square as usize], blockers)]
     }
 
     /// Squares seen by a queen on square
-    #[inline]
     pub fn queen_attacks(&self, square: Square, blockers: Bitboard) -> Bitboard {
         self.rook_attacks(square, blockers) | self.bishop_attacks(square, blockers)
     }
@@ -683,12 +657,10 @@ impl Board {
         attacks & !friendly_pieces
     }
 
-    #[inline]
     pub fn knight_moves(&self, square: Square) -> Bitboard {
         KNIGHT_MOVES[square as usize] & !self.friendly_pieces()
     }
 
-    #[inline]
     pub fn king_moves(&self, square: Square) -> Bitboard {
         KING_MOVES[square as usize] & !self.friendly_pieces()
     }

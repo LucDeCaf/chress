@@ -37,7 +37,6 @@ impl Bitboard {
     }
 
     /// Appends moves to a move list
-    #[inline]
     pub fn append_moves_from(&mut self, moves: &mut Vec<Move>, from: Square) {
         for _ in 0..self.0.count_ones() {
             moves.push(Move::new(from, Square::ALL[self.pop_lsb() as usize]));
@@ -51,7 +50,6 @@ impl Bitboard {
         i as u32
     }
 
-    #[inline]
     pub fn is_empty(&self) -> bool {
         *self == Bitboard::EMPTY
     }
@@ -94,7 +92,6 @@ impl Display for Bitboard {
 
 impl Mul<bool> for Bitboard {
     type Output = Bitboard;
-    #[inline]
     fn mul(self, rhs: bool) -> Self::Output {
         Bitboard(self.0 * rhs as u64)
     }
@@ -102,7 +99,6 @@ impl Mul<bool> for Bitboard {
 
 impl Not for Bitboard {
     type Output = Bitboard;
-    #[inline]
     fn not(self) -> Self::Output {
         Bitboard(!self.0)
     }
@@ -110,7 +106,6 @@ impl Not for Bitboard {
 
 impl Shl<Self> for Bitboard {
     type Output = Bitboard;
-    #[inline]
     fn shl(self, rhs: Self) -> Self::Output {
         Bitboard(self.0 << rhs.0)
     }
@@ -118,21 +113,18 @@ impl Shl<Self> for Bitboard {
 
 impl Shr<Self> for Bitboard {
     type Output = Bitboard;
-    #[inline]
     fn shr(self, rhs: Self) -> Self::Output {
         Bitboard(self.0 >> rhs.0)
     }
 }
 
 impl ShlAssign<Self> for Bitboard {
-    #[inline]
     fn shl_assign(&mut self, rhs: Self) {
         self.0 <<= rhs.0;
     }
 }
 
 impl ShrAssign<Self> for Bitboard {
-    #[inline]
     fn shr_assign(&mut self, rhs: Self) {
         self.0 >>= rhs.0;
     }
@@ -142,7 +134,6 @@ macro_rules! impl_bit_ops {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Bitboard {
             type Output = Bitboard;
-            #[inline]
             fn $fn(self, rhs: Self) -> Self::Output {
                 Bitboard(self.0 $ex rhs.0)
             }
@@ -153,7 +144,6 @@ macro_rules! impl_bit_ops {
 macro_rules! impl_bit_ops_assign {
     ($op:ident, $fn:ident, $ex:tt) => {
         impl $op for Bitboard {
-            #[inline]
             fn $fn(&mut self, rhs: Self) {
                 self.0 $ex rhs.0;
             }
@@ -173,14 +163,12 @@ macro_rules! impl_shift {
     ($t:ty) => {
         impl Shl<$t> for Bitboard {
             type Output = Bitboard;
-            #[inline]
             fn shl(self, rhs: $t) -> Self::Output {
                 Bitboard(self.0 << rhs)
             }
         }
 
         impl ShlAssign<$t> for Bitboard {
-            #[inline]
             fn shl_assign(&mut self, rhs: $t) {
                 self.0 <<= rhs;
             }
@@ -188,14 +176,12 @@ macro_rules! impl_shift {
 
         impl Shr<$t> for Bitboard {
             type Output = Bitboard;
-            #[inline]
             fn shr(self, rhs: $t) -> Self::Output {
                 Bitboard(self.0 >> rhs)
             }
         }
 
         impl ShrAssign<$t> for Bitboard {
-            #[inline]
             fn shr_assign(&mut self, rhs: $t) {
                 self.0 >>= rhs;
             }
