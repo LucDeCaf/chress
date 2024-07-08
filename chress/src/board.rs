@@ -711,7 +711,6 @@ impl Board {
         }
     }
 
-    // TODO: Remove all calls to Bitboard::active() due to it allocating a new Vector every time
     /// Get all pseudolegal moves
     pub fn pseudolegal_moves(&self) -> Vec<Move> {
         let mut moves = Vec::new();
