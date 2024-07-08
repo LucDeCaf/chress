@@ -178,6 +178,12 @@ impl Board {
         }
     }
 
+    pub fn from_fen(fen: &str) -> Result<Self, ParseFenError> {
+        let mut board = Board::new();
+        board.load_from_fen(fen)?;
+        Ok(board)
+    }
+
     pub fn load_from_fen(&mut self, fen: &str) -> Result<(), ParseFenError> {
         self.clear_bitboards();
         self.move_list.clear();
