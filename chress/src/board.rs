@@ -25,10 +25,6 @@ use crate::build::{
 use crate::move_gen::{create_bishop_table, create_rook_table, magic_index};
 
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-pub const POSITION_2: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-pub const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
-pub const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
-pub const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
 
 const KING_STARTING_SQUARES: [Square; 2] = [Square::E8, Square::E1];
 const CASTLING_BLOCKERS: [[Bitboard; 2]; 2] = [
@@ -1254,6 +1250,12 @@ mod board_tests {
     use rand::{thread_rng, Rng};
     use test::{black_box, Bencher};
 
+    pub const KIWIPETE: &str =
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    pub const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
+    pub const POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    pub const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+
     #[bench]
     fn friendly_pieces_offset(b: &mut Bencher) {
         let mut board = Board::default();
@@ -1276,7 +1278,7 @@ mod board_tests {
 
     #[bench]
     fn legal_moves(b: &mut Bencher) {
-        let mut board = Board::from_fen(POSITION_2).unwrap();
+        let mut board = Board::from_fen(KIWIPETE).unwrap();
 
         b.iter(|| black_box(board.legal_moves()));
     }
@@ -1342,7 +1344,7 @@ mod board_tests {
     // 55 ± 1
     #[bench]
     fn moves_from_integrated(b: &mut Bencher) {
-        let board = Board::from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(KIWIPETE).unwrap();
 
         let mut color = Color::White;
 
@@ -1372,7 +1374,7 @@ mod board_tests {
 
     #[bench]
     fn make_unmake(b: &mut Bencher) {
-        let mut board = Board::from_fen(POSITION_2).unwrap();
+        let mut board = Board::from_fen(KIWIPETE).unwrap();
         let moves = board.legal_moves();
 
         b.iter(|| {
@@ -1386,7 +1388,7 @@ mod board_tests {
     // 30.7 ± 1.1
     #[bench]
     fn piece_at_branched(b: &mut Bencher) {
-        let board = Board::from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(KIWIPETE).unwrap();
 
         let mut rng = thread_rng();
 
@@ -1406,7 +1408,7 @@ mod board_tests {
     // 26.4 ± 0.7
     #[bench]
     fn piece_at_branchless(b: &mut Bencher) {
-        let board = Board::from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(KIWIPETE).unwrap();
 
         let mut rng = thread_rng();
 
@@ -1459,8 +1461,8 @@ mod board_tests {
     }
 
     #[test]
-    fn perft_position_2() {
-        let mut board = Board::from_fen(POSITION_2).unwrap();
+    fn perft_kiwipete() {
+        let mut board = Board::from_fen(KIWIPETE).unwrap();
 
         assert_eq!(board.perft_parallel(5), 193690690);
     }

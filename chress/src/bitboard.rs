@@ -210,15 +210,12 @@ mod bitboard_tests {
 
     use super::*;
 
-    use crate::{
-        board::{Board, POSITION_2},
-        color::Color,
-        piece::Piece,
-        r#move::Move,
-        square::Square,
-    };
+    use crate::{board::Board, color::Color, piece::Piece, r#move::Move, square::Square};
 
     use test::Bencher;
+
+    pub const KIWIPETE: &str =
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 
     #[bench]
     fn manual_bits_zero(b: &mut Bencher) {
@@ -254,7 +251,7 @@ mod bitboard_tests {
 
     #[bench]
     fn append_moves_from_fn(b: &mut Bencher) {
-        let board = Board::from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(KIWIPETE).unwrap();
 
         let mut moves = Vec::new();
 
@@ -274,7 +271,7 @@ mod bitboard_tests {
 
     #[bench]
     fn append_moves_from_inlined(b: &mut Bencher) {
-        let board = Board::from_fen(POSITION_2).unwrap();
+        let board = Board::from_fen(KIWIPETE).unwrap();
 
         let mut moves = Vec::new();
 
