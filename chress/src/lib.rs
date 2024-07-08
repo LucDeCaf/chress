@@ -1,4 +1,4 @@
-#![feature(exact_size_is_empty)]
+#![feature(test)]
 
 pub mod bitboard;
 pub mod board;

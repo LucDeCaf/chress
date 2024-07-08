@@ -20,6 +20,8 @@ pub mod perft_tests {
 
     // ? Current speeds (1): ~853,000 nodes/sec
     // ? Current speeds (5): ~21,000,000 nodes/sec
+    // ? 
+    // ? Speed looks good enough to move onto the engine itself
     #[test]
     fn perft_kiwipete() {
         let mut board = Board::from_fen(POSITION_2).unwrap();
