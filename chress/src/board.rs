@@ -160,11 +160,6 @@ pub struct Board {
 }
 
 impl Board {
-    pub const FILE_A: Bitboard = Bitboard(0x0101010101010101);
-    pub const FILE_H: Bitboard = Bitboard(0x8080808080808080);
-    pub const RANK_1: Bitboard = Bitboard(0x00000000000000FF);
-    pub const RANK_8: Bitboard = Bitboard(0xFF00000000000000);
-
     pub fn new() -> Self {
         Self {
             piece_bitboards: [Bitboard::EMPTY; 12],
@@ -504,14 +499,17 @@ impl Board {
         }
     }
 
+    #[inline]
     pub fn bitboard(&self, piece: Piece, color: Color) -> Bitboard {
         self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
+    #[inline]
     pub fn bitboard_mut(&mut self, piece: Piece, color: Color) -> &mut Bitboard {
         &mut self.piece_bitboards[Self::bitboard_index(piece, color)]
     }
 
+    #[inline]
     pub fn bitboard_index(piece: Piece, color: Color) -> usize {
         piece as usize + (color as usize * 6)
     }
@@ -533,19 +531,21 @@ impl Board {
     }
 
     pub fn white_pieces(&self) -> Bitboard {
-        let mut mask = Bitboard::EMPTY;
-        for bb in self.white_bitboards() {
-            mask |= bb;
-        }
-        mask
+        self.piece_bitboards[6]
+            | self.piece_bitboards[7]
+            | self.piece_bitboards[8]
+            | self.piece_bitboards[9]
+            | self.piece_bitboards[10]
+            | self.piece_bitboards[11]
     }
 
     pub fn black_pieces(&self) -> Bitboard {
-        let mut mask = Bitboard::EMPTY;
-        for bb in self.black_bitboards() {
-            mask |= bb;
-        }
-        mask
+        self.piece_bitboards[0]
+            | self.piece_bitboards[1]
+            | self.piece_bitboards[2]
+            | self.piece_bitboards[3]
+            | self.piece_bitboards[4]
+            | self.piece_bitboards[5]
     }
 
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
@@ -561,7 +561,6 @@ impl Board {
 
         let mask = square.bitboard();
 
-        // Using conditionals, not branches
         let knights =
             !((self.piece_bitboards[0] | self.piece_bitboards[6]) & mask).is_empty() as usize * 1;
         let bishops =
@@ -660,25 +659,6 @@ impl Board {
         self.rook_attacks(square, blockers) | self.bishop_attacks(square, blockers)
     }
 
-    /// Squares seen by a pawn on square
-    #[inline]
-    pub fn pawn_attacks(&self, square: Square, color: Color) -> Bitboard {
-        PAWN_CAPTURES[color as usize][square as usize]
-    }
-
-    /// Squares seen by a knight on square
-    #[inline]
-    pub fn knight_attacks(square: Square) -> Bitboard {
-        KNIGHT_MOVES[square as usize]
-    }
-
-    // Squares seen by a king on square
-    #[inline]
-    pub fn king_attacks(square: Square) -> Bitboard {
-        KING_MOVES[square as usize]
-    }
-
-    #[inline]
     pub fn rook_moves(&self, square: Square) -> Bitboard {
         let friendly_pieces = self.friendly_pieces();
         let enemy_pieces = self.enemy_pieces();
@@ -686,7 +666,6 @@ impl Board {
         self.rook_attacks(square, friendly_pieces | enemy_pieces) & !friendly_pieces
     }
 
-    #[inline]
     pub fn bishop_moves(&self, square: Square) -> Bitboard {
         let friendly = self.friendly_pieces();
         let enemy = self.enemy_pieces();
@@ -694,7 +673,6 @@ impl Board {
         self.bishop_attacks(square, friendly | enemy) & !friendly
     }
 
-    #[inline]
     pub fn queen_moves(&self, square: Square) -> Bitboard {
         let friendly_pieces = self.friendly_pieces();
         let enemy_pieces = self.enemy_pieces();
@@ -707,12 +685,12 @@ impl Board {
 
     #[inline]
     pub fn knight_moves(&self, square: Square) -> Bitboard {
-        Self::knight_attacks(square) & !self.friendly_pieces()
+        KNIGHT_MOVES[square as usize] & !self.friendly_pieces()
     }
 
     #[inline]
     pub fn king_moves(&self, square: Square) -> Bitboard {
-        Self::king_attacks(square) & !self.friendly_pieces()
+        KING_MOVES[square as usize] & !self.friendly_pieces()
     }
 
     /// Used with sliding pieces
@@ -824,7 +802,7 @@ impl Board {
         for _ in 0..pawns.0.count_ones() {
             let from = Square::ALL[pawns.pop_lsb() as usize];
 
-            let mut captures = self.pawn_attacks(from, color) & enemy_pieces;
+            let mut captures = PAWN_CAPTURES[color as usize][from as usize] & enemy_pieces;
 
             // Promotion
             for _ in 0..captures.0.count_ones() {
@@ -851,8 +829,8 @@ impl Board {
 
         let reset_mask = Bitboard::UNIVERSE * can_en_passant;
 
-        let pawns_that_can_take =
-            self.pawn_attacks(ep_square, color.inverse()) & self.bitboard(Piece::Pawn, color);
+        let pawns_that_can_take = PAWN_CAPTURES[color.inverse() as usize][ep_square as usize]
+            & self.bitboard(Piece::Pawn, color);
 
         let mut actual_pawns = pawns_that_can_take & reset_mask;
 
@@ -966,7 +944,7 @@ impl Board {
     /// Checks if a square is seen by pieces of a certain color for the
     /// purpose of legal move generation
     pub fn square_attacked_by(&self, square: Square, attacker_color: Color) -> bool {
-        let pawn_attackers = self.pawn_attacks(square, attacker_color.inverse())
+        let pawn_attackers = PAWN_CAPTURES[attacker_color.inverse() as usize][square as usize]
             & self.bitboard(Piece::Pawn, attacker_color);
 
         if !pawn_attackers.is_empty() {
