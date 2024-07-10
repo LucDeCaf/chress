@@ -3,22 +3,5 @@ name = "chress-engine"
 version = "0.1.0"
 edition = "2021"
 
-[profile.release]
-opt-level = 3
-codegen-units = 1
-lto = "fat"
-panic = "abort"
-overflow-checks = false
-
-[profile.dev]
-opt-level = 2
-lto = "thin"
-
-[profile.test]
-opt-level = 3
-codegen-units = 1
-lto = "fat"
-overflow-checks = false
-
 [dependencies]
 chress = { path = "../chress" }

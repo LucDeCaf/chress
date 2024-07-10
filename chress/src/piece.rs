@@ -23,8 +23,8 @@ pub enum Piece {
     Bishop,
     Rook,
     Queen,
-    Pawn,
     King,
+    Pawn,
 }
 
 impl Piece {
@@ -33,10 +33,10 @@ impl Piece {
         Piece::Bishop,
         Piece::Rook,
         Piece::Queen,
-        Piece::Pawn,
         Piece::King,
+        Piece::Pawn,
     ];
-    pub const CHARS: [char; 6] = ['n', 'b', 'r', 'q', 'p', 'k'];
+    pub const CHARS: [char; 6] = ['n', 'b', 'r', 'q', 'k', 'p'];
 
     pub const PROMOTION_MASKS: [u16; 4] = [
         0b0000_0000_0000_0001,
@@ -110,8 +110,8 @@ mod piece_tests {
                 'b' | 'B' => Ok(Piece::Bishop),
                 'r' | 'R' => Ok(Piece::Rook),
                 'q' | 'Q' => Ok(Piece::Queen),
-                'p' | 'P' => Ok(Piece::Pawn),
                 'k' | 'K' => Ok(Piece::King),
+                'p' | 'P' => Ok(Piece::Pawn),
                 _ => Err(ParsePieceCharError),
             }
         })

@@ -20,6 +20,8 @@ impl Move {
     pub const KS_BLACK: Move = Move::new(Square::E8, Square::G8);
     pub const QS_BLACK: Move = Move::new(Square::E8, Square::C8);
 
+    pub const NULLMOVE: Move = Move(0);
+
     pub const fn new(from: Square, to: Square) -> Self {
         let from = from as u16;
         let to = to as u16;

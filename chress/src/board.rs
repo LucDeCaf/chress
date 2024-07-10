@@ -580,6 +580,14 @@ impl Board {
             | self.piece_bitboards[5]
     }
 
+    pub fn white_bitboards(&self) -> &[Bitboard] {
+        &self.piece_bitboards[6..12]
+    }
+
+    pub fn black_bitboards(&self) -> &[Bitboard] {
+        &self.piece_bitboards[0..6]
+    }
+
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
         const PIECES: [Option<Piece>; 7] = [
             None,
@@ -587,8 +595,8 @@ impl Board {
             Some(Piece::Bishop),
             Some(Piece::Rook),
             Some(Piece::Queen),
-            Some(Piece::Pawn),
             Some(Piece::King),
+            Some(Piece::Pawn),
         ];
 
         let mask = square.bitboard();
@@ -601,12 +609,12 @@ impl Board {
             !((self.piece_bitboards[2] | self.piece_bitboards[8]) & mask).is_empty() as usize * 3;
         let queens =
             !((self.piece_bitboards[3] | self.piece_bitboards[9]) & mask).is_empty() as usize * 4;
-        let pawns =
-            !((self.piece_bitboards[4] | self.piece_bitboards[10]) & mask).is_empty() as usize * 5;
         let kings =
+            !((self.piece_bitboards[4] | self.piece_bitboards[10]) & mask).is_empty() as usize * 5;
+        let pawns =
             !((self.piece_bitboards[5] | self.piece_bitboards[11]) & mask).is_empty() as usize * 6;
 
-        let piece_at_square_index = knights | bishops | rooks | queens | pawns | kings;
+        let piece_at_square_index = knights | bishops | rooks | queens | kings | pawns;
 
         PIECES[piece_at_square_index]
     }
@@ -1215,8 +1223,8 @@ impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         #[rustfmt::skip]
         const PIECE_CHARS: [char; 12] = [
-            'n', 'b', 'r', 'q', 'p', 'k',
-            'N', 'B', 'R', 'Q', 'P', 'K',
+            'n', 'b', 'r', 'q', 'k', 'p',
+            'N', 'B', 'R', 'Q', 'K', 'P',
         ];
 
         let mut chars = [
