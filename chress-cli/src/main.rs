@@ -6,6 +6,7 @@ use chress::{
     board::{r#move::Move, Board, START_FEN},
     move_gen::MoveGen,
 };
+
 use chress_cli::{perft, uci};
 
 fn main() -> std::io::Result<()> {

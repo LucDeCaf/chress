@@ -16,14 +16,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "chress-cli"
+name = "chress_cli"
 version = "0.1.0"
 dependencies = [
  "chress",
+ "chress_engine",
 ]
 
 [[package]]
-name = "chress-engine"
+name = "chress_engine"
 version = "0.1.0"
 dependencies = [
  "chress",
