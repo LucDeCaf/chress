@@ -8,7 +8,7 @@ use std::{
 
 use chress::board::Board;
 
-use chress_engine::search::searcher::SearchManager;
+use chress_engine::search::SearchManager;
 
 extern crate chress;
 

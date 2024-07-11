@@ -9,6 +9,8 @@ use chress::{
 
 use chress_cli::{perft, uci};
 
+use chress_engine::search::searcher::SearchManager;
+
 fn main() -> std::io::Result<()> {
     let mut board = Board::default();
     let move_gen = MoveGen::new();
