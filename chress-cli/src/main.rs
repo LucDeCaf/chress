@@ -3,15 +3,18 @@ extern crate chress;
 use std::{io::stdin, process::Command};
 
 use chress::{
-    board::{Board, START_FEN},
-    r#move::Move,
+    board::{r#move::Move, Board, START_FEN},
+    move_gen::MoveGen,
 };
 use chress_cli::{perft, uci};
 
 fn main() -> std::io::Result<()> {
     let mut board = Board::default();
+    let move_gen = MoveGen::new();
 
     let mut input = String::new();
+
+    let mut move_list = Vec::new();
 
     'main: loop {
         input.clear();
@@ -27,12 +30,14 @@ fn main() -> std::io::Result<()> {
             let arguments = iter.map(|s| s.trim()).collect::<Vec<&str>>();
 
             match command {
-                "startpos" => board.load_from_fen(START_FEN).unwrap(),
+                "startpos" => board.load_from_fen(START_FEN, &move_gen).unwrap(),
                 "load" => {
                     if arguments[0] == "fen" {
                         let arguments = &arguments[1..];
 
-                        if let Err(parse_error) = board.load_from_fen(&arguments.join(" ")) {
+                        if let Err(parse_error) =
+                            board.load_from_fen(&arguments.join(" "), &move_gen)
+                        {
                             println!("Error: {}", parse_error);
                         }
                     }
@@ -55,13 +60,15 @@ fn main() -> std::io::Result<()> {
                 }
 
                 "undo" => {
-                    if let Err(unmake_move_error) = board.unmake_move() {
+                    if let Err(unmake_move_error) = board.unmake_move(move_list.pop().unwrap()) {
                         println!("Error: {}", unmake_move_error);
                     }
                 }
 
                 "moves" => {
-                    let mut moves = board.legal_moves();
+                    let mut moves = Vec::new();
+
+                    move_gen.legal_moves(&board, &mut moves);
                     moves.sort_unstable();
 
                     for r#move in moves {
@@ -80,11 +87,11 @@ fn main() -> std::io::Result<()> {
                         break;
                     };
 
-                    perft::perft(&mut board, depth);
+                    perft::perft(board, &move_gen, depth);
                 }
 
                 "uci" => {
-                    uci::uci(&mut board)?;
+                    uci::uci(&mut board, &move_gen)?;
                     break 'main;
                 }
 

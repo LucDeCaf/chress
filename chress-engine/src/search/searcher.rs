@@ -6,12 +6,16 @@ use std::{
     thread::JoinHandle,
 };
 
-use chress::{board::Board, r#move::Move};
+use chress::{
+    board::{r#move::Move, Board},
+    move_gen::MoveGen,
+};
 
 use crate::evaluation::evaluate;
 
-pub struct Searcher {
+pub struct Searcher<'a> {
     board: Board,
+    move_gen: &'a MoveGen,
 
     best_move_so_far: Move,
     best_eval_so_far: i32,
@@ -20,28 +24,28 @@ pub struct Searcher {
 
     cancelled: Arc<Mutex<AtomicBool>>,
 
-    pub handles: Vec<JoinHandle<()>>,
+    search_handle: Option<JoinHandle<()>>,
 }
 
-impl Searcher {
+impl<'a> Searcher<'a> {
     const MAX_SCORE: i32 = 999999;
     const MIN_SCORE: i32 = -999999;
 
     pub const ALPHA: i32 = Self::MAX_SCORE;
     pub const BETA: i32 = Self::MIN_SCORE;
 
-    pub fn new(board: Board, cancelled: Arc<Mutex<AtomicBool>>) -> Self {
+    pub fn new(board: Board, move_gen: &'a MoveGen) -> Self {
         Self {
             board,
+            move_gen,
 
             best_move_so_far: Move::NULLMOVE,
             best_eval_so_far: 0,
             best_move: Move::NULLMOVE,
             best_eval: 0,
 
-            cancelled,
-
-            handles: Vec::new(),
+            cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
+            search_handle: None,
         }
     }
 
@@ -55,9 +59,12 @@ impl Searcher {
         // Start search
         self.start_iterative_deepening();
 
-        // If search was cancelled before any moves were looked at
+        // If search was cancelled before any moves were looked at, take a
+        // random legal move
         if self.best_move == Move::NULLMOVE {
-            self.best_move = self.board.legal_moves()[0];
+            let mut mvs = Vec::new();
+            self.move_gen.legal_moves(&self.board, &mut mvs);
+            self.best_move = mvs[0];
         }
 
         // Reset 'cancelled'
@@ -97,16 +104,17 @@ impl Searcher {
             return evaluate(&self.board);
         }
 
-        let moves = self.board.legal_moves();
+        let mut moves = Vec::new();
+        self.move_gen.legal_moves(&self.board, &mut moves);
 
         let mut eval;
 
         for mv in moves {
-            self.board.make_move(mv).unwrap();
+            let md = self.board.make_move(mv).unwrap();
 
             eval = -self.search(depth - 1, -beta, -alpha);
 
-            self.board.unmake_move().unwrap();
+            self.board.unmake_move(md).unwrap();
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
                 break;

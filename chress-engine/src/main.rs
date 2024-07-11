@@ -4,10 +4,9 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    thread,
 };
 
-use chress::board::Board;
+use chress::{board::Board, move_gen::MoveGen};
 use chress_engine::search::searcher::Searcher;
 
 extern crate chress;
@@ -17,8 +16,9 @@ fn main() -> std::io::Result<()> {
     let cancelled = Arc::new(Mutex::new(AtomicBool::new(false)));
 
     let board = Board::default();
+    let move_gen = MoveGen::new();
 
-    let mut searcher = Searcher::new(board, Arc::clone(&cancelled));
+    let mut searcher = Searcher::new(board, &move_gen);
 
     let mut buf = String::new();
     let mut stdin = io::stdin().lock();
@@ -35,7 +35,7 @@ fn main() -> std::io::Result<()> {
         let mut parts = buf.split(' ');
 
         let command = parts.next().unwrap();
-        let arguments: Vec<&str> = parts.collect();
+        let _arguments: Vec<&str> = parts.collect();
 
         match command {
             "quit" => {
@@ -53,11 +53,6 @@ fn main() -> std::io::Result<()> {
 
             _ => continue,
         }
-    }
-
-    // Just here for safety
-    for handle in searcher.handles {
-        handle.join().unwrap();
     }
 
     Ok(())

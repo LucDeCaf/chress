@@ -5,6 +5,11 @@ use std::{
 
 use super::color::Color;
 
+/// ```
+/// // Castling Rights : ----FFFF
+/// // En Passant File : -FFF----
+/// // Can En Passant  : F-------
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Flags(pub u8);
 
@@ -170,7 +175,7 @@ impl Not for Flags {
 mod flag_tests {
     use super::*;
 
-    use crate::color::Color;
+    use crate::board::color::Color;
 
     #[test]
     fn kingside() {

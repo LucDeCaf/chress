@@ -1,8 +1,8 @@
 use std::{error::Error, fmt::Display, io::stdin};
 
 use chress::{
-    board::{Board, START_FEN},
-    r#move::Move,
+    board::{r#move::Move, Board, START_FEN},
+    move_gen::MoveGen,
 };
 
 #[derive(Debug, PartialEq)]
@@ -63,7 +63,7 @@ impl TryFrom<&str> for Command {
     }
 }
 
-fn process_command(command: &Command, board: &mut Board) -> Option<String> {
+fn process_command(command: &Command, board: &mut Board, move_gen: &MoveGen) -> Option<String> {
     match command {
         Command::Uci => Some(
             String::from("id name Chress\n")
@@ -80,7 +80,7 @@ fn process_command(command: &Command, board: &mut Board) -> Option<String> {
         Command::Position(moves) => {
             for r#move in moves {
                 if r#move == "startpos" {
-                    board.load_from_fen(START_FEN).unwrap();
+                    board.load_from_fen(START_FEN, move_gen).unwrap();
                     return None;
                 }
 
@@ -98,10 +98,13 @@ fn process_command(command: &Command, board: &mut Board) -> Option<String> {
     }
 }
 
-pub fn uci(board: &mut Board) -> std::io::Result<()> {
+pub fn uci(board: &mut Board, move_gen: &MoveGen) -> std::io::Result<()> {
     let mut input = String::new();
 
-    println!("{}", process_command(&Command::Uci, board).unwrap());
+    println!(
+        "{}",
+        process_command(&Command::Uci, board, move_gen).unwrap()
+    );
 
     loop {
         input.clear();
@@ -116,7 +119,7 @@ pub fn uci(board: &mut Board) -> std::io::Result<()> {
             break;
         }
 
-        if let Some(response) = process_command(&command, board) {
+        if let Some(response) = process_command(&command, board, move_gen) {
             println!("{}", response);
         }
     }

@@ -5,10 +5,14 @@ use std::{
     process::{Command, Stdio},
 };
 
-use chress::{board::Board, r#move::Move};
+use chress::{
+    board::{r#move::Move, Board},
+    debug::divide,
+    move_gen::MoveGen,
+};
 
-pub fn perft(board: &mut Board, depth: usize) {
-    let (chress_total, chress_move_results) = board.divide(depth);
+pub fn perft(board: Board, move_gen: &MoveGen, depth: usize) {
+    let (chress_total, chress_move_results) = divide(board, &move_gen, depth);
 
     let mut found_moves = HashMap::new();
     for mv in chress_move_results {
