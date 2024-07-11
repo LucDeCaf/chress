@@ -377,10 +377,10 @@ impl MoveGen {
 
             if !self.is_legal_move(board.clone(), mv) {
                 moves.swap_remove(i);
+                len -= 1;
+            } else {
+                i += 1;
             }
-
-            i += 1;
-            len = moves.len();
         }
     }
 }
