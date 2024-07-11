@@ -125,7 +125,7 @@ impl Search {
         let mut i = 1;
 
         while i < 254 {
-            self.alpha_beta(Self::ALPHA, Self::BETA, i);
+            self.alpha_beta(Self::BETA, Self::ALPHA, i);
 
             *self.best_move.lock().unwrap() = self.best_move_so_far;
             self.best_eval
@@ -155,8 +155,8 @@ impl Search {
 
         for mv in moves {
             let move_data = self.board.make_move(mv).unwrap();
-            let score = self.alpha_beta(-beta, -alpha, depth - 1);
-            println!("{mv}: {score}");
+            let score = -self.alpha_beta(-beta, -alpha, depth - 1);
+            // println!("{mv}: {score}");
             self.board.unmake_move(move_data).unwrap();
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
