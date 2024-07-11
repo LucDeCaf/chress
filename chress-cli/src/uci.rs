@@ -1,9 +1,10 @@
-use std::{error::Error, fmt::Display, io::stdin};
+use std::{error::Error, fmt::Display, io::stdin, sync::Arc};
 
 use chress::{
     board::{r#move::Move, Board, START_FEN},
     move_gen::MoveGen,
 };
+use chress_engine::search::SearchManager;
 
 #[derive(Debug, PartialEq)]
 enum Command {
@@ -63,7 +64,12 @@ impl TryFrom<&str> for Command {
     }
 }
 
-fn process_command(command: &Command, board: &mut Board, move_gen: &MoveGen) -> Option<String> {
+fn process_command(
+    command: &Command,
+    board: &mut Board,
+    move_gen: &MoveGen,
+    search_manager: &mut SearchManager,
+) -> Option<String> {
     match command {
         Command::Uci => Some(
             String::from("id name Chress\n")
@@ -92,18 +98,29 @@ fn process_command(command: &Command, board: &mut Board, move_gen: &MoveGen) -> 
 
             None
         }
-        Command::Go => Some(String::from("bestmove 0000")),
-        Command::Stop => None,
+        Command::Go => {
+            search_manager.start_search(board.clone());
+            None
+        }
+        Command::Stop => {
+            search_manager.cancel();
+            let best_move = search_manager.best_move();
+            Some(format!("bestmove {}", best_move.to_string().trim()))
+        }
         Command::Quit => None,
     }
 }
 
-pub fn uci(board: &mut Board, move_gen: &MoveGen) -> std::io::Result<()> {
+pub fn uci(board: &mut Board, move_gen: Arc<MoveGen>) -> std::io::Result<()> {
+    let mut search_manager = SearchManager::new(Arc::clone(&move_gen));
+
+    let move_gen = move_gen.as_ref();
+
     let mut input = String::new();
 
     println!(
         "{}",
-        process_command(&Command::Uci, board, move_gen).unwrap()
+        process_command(&Command::Uci, board, move_gen, &mut search_manager).unwrap()
     );
 
     loop {
@@ -119,7 +136,7 @@ pub fn uci(board: &mut Board, move_gen: &MoveGen) -> std::io::Result<()> {
             break;
         }
 
-        if let Some(response) = process_command(&command, board, move_gen) {
+        if let Some(response) = process_command(&command, board, move_gen, &mut search_manager) {
             println!("{}", response);
         }
     }

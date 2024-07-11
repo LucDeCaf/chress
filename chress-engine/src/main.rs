@@ -6,7 +6,7 @@ use std::{
     },
 };
 
-use chress::board::Board;
+use chress::{board::Board, move_gen::MoveGen};
 
 use chress_engine::search::SearchManager;
 
@@ -17,8 +17,9 @@ fn main() -> std::io::Result<()> {
     let cancelled = Arc::new(Mutex::new(AtomicBool::new(false)));
 
     let board = Board::default();
+    let move_gen = Arc::new(MoveGen::new());
 
-    let mut search_manager = SearchManager::new();
+    let mut search_manager = SearchManager::new(Arc::clone(&move_gen));
 
     let mut buf = String::new();
     let mut stdin = io::stdin().lock();

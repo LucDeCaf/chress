@@ -14,6 +14,7 @@ use chress::{
 use crate::evaluation::evaluate;
 
 /// Manages all searching threads and shared data
+#[derive(Debug)]
 pub struct SearchManager {
     handles: Vec<JoinHandle<()>>,
 
@@ -25,11 +26,11 @@ pub struct SearchManager {
 }
 
 impl SearchManager {
-    pub fn new() -> Self {
+    pub fn new(move_gen: Arc<MoveGen>) -> Self {
         Self {
             handles: Vec::new(),
 
-            move_gen: Arc::new(MoveGen::new()),
+            move_gen,
             cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
             best_move: Arc::new(Mutex::new(Move::NULLMOVE)),
             best_eval: Arc::new(Mutex::new(AtomicI32::new(0))),
@@ -71,13 +72,8 @@ impl SearchManager {
     }
 }
 
-impl Default for SearchManager {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// Represents a single thread performing a search
+#[derive(Debug, Clone)]
 pub struct Search {
     board: Board,
     best_move_so_far: Move,
@@ -155,8 +151,8 @@ impl Search {
 
         for mv in moves {
             let move_data = self.board.make_move(mv).unwrap();
-            let score = -self.alpha_beta(-beta, -alpha, depth - 1);
-            // println!("{mv}: {score}");
+            let score = -self.alpha_beta(-beta, -alpha, depth - 1)
+                * self.board.active_color.direction() as i32;
             self.board.unmake_move(move_data).unwrap();
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {

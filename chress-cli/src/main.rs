@@ -1,6 +1,6 @@
 extern crate chress;
 
-use std::{io::stdin, process::Command};
+use std::{io::stdin, process::Command, sync::Arc};
 
 use chress::{
     board::{r#move::Move, Board, START_FEN},
@@ -9,11 +9,9 @@ use chress::{
 
 use chress_cli::{perft, uci};
 
-use chress_engine::search::searcher::SearchManager;
-
 fn main() -> std::io::Result<()> {
     let mut board = Board::default();
-    let move_gen = MoveGen::new();
+    let move_gen = Arc::new(MoveGen::new());
 
     let mut input = String::new();
 
@@ -94,7 +92,7 @@ fn main() -> std::io::Result<()> {
                 }
 
                 "uci" => {
-                    uci::uci(&mut board, &move_gen)?;
+                    uci::uci(&mut board, move_gen)?;
                     break 'main;
                 }
 
