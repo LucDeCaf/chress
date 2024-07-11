@@ -1,9 +1,9 @@
 use std::{
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicI32, Ordering},
         Arc, Mutex,
     },
-    thread::JoinHandle,
+    thread::{self, JoinHandle},
 };
 
 use chress::{
@@ -13,79 +13,125 @@ use chress::{
 
 use crate::evaluation::evaluate;
 
-pub struct Searcher<'a> {
-    board: Board,
-    move_gen: &'a MoveGen,
+/// Manages all searching threads and shared data
+pub struct SearchManager {
+    handles: Vec<JoinHandle<()>>,
 
-    best_move_so_far: Move,
-    best_eval_so_far: i32,
-    best_move: Move,
-    best_eval: i32,
-
-    cancelled: Arc<Mutex<AtomicBool>>,
-
-    search_handle: Option<JoinHandle<()>>,
+    // Shared data
+    pub move_gen: Arc<MoveGen>,
+    pub cancelled: Arc<Mutex<AtomicBool>>,
+    pub best_move: Arc<Mutex<Move>>,
+    pub best_eval: Arc<Mutex<AtomicI32>>,
 }
 
-impl<'a> Searcher<'a> {
+impl SearchManager {
+    pub fn new() -> Self {
+        Self {
+            handles: Vec::new(),
+
+            move_gen: Arc::new(MoveGen::new()),
+            cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
+            best_move: Arc::new(Mutex::new(Move::NULLMOVE)),
+            best_eval: Arc::new(Mutex::new(AtomicI32::new(0))),
+        }
+    }
+
+    pub fn start_search(&mut self, position: Board) {
+        // Reset data from prev search
+        self.cancelled
+            .lock()
+            .unwrap()
+            .store(false, Ordering::Relaxed);
+        *self.best_move.lock().unwrap() = Move::NULLMOVE;
+
+        // Clone shared data references
+        let move_gen = Arc::clone(&self.move_gen);
+        let cancelled = Arc::clone(&self.cancelled);
+        let best_move = Arc::clone(&self.best_move);
+        let best_eval = Arc::clone(&self.best_eval);
+
+        // Start new search
+        let new_search = Search::new(position, move_gen, cancelled, best_move, best_eval);
+        self.handles.push(new_search.start());
+    }
+
+    pub fn cancel(&mut self) {
+        self.cancelled
+            .lock()
+            .unwrap()
+            .store(true, Ordering::Relaxed);
+    }
+
+    pub fn best_move(&self) -> Move {
+        *self.best_move.lock().unwrap()
+    }
+
+    pub fn best_eval(&self) -> i32 {
+        self.best_eval.lock().unwrap().load(Ordering::Relaxed)
+    }
+}
+
+impl Default for SearchManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Represents a single thread performing a search
+pub struct Search {
+    board: Board,
+    best_move_so_far: Move,
+    best_eval_so_far: i32,
+
+    // Shared data
+    move_gen: Arc<MoveGen>,
+    cancelled: Arc<Mutex<AtomicBool>>,
+    best_move: Arc<Mutex<Move>>,
+    best_eval: Arc<Mutex<AtomicI32>>,
+}
+
+impl Search {
     const MAX_SCORE: i32 = 999999;
     const MIN_SCORE: i32 = -999999;
 
     pub const ALPHA: i32 = Self::MAX_SCORE;
     pub const BETA: i32 = Self::MIN_SCORE;
 
-    pub fn new(board: Board, move_gen: &'a MoveGen) -> Self {
+    pub fn new(
+        board: Board,
+        move_gen: Arc<MoveGen>,
+        cancelled: Arc<Mutex<AtomicBool>>,
+        best_move: Arc<Mutex<Move>>,
+        best_eval: Arc<Mutex<AtomicI32>>,
+    ) -> Self {
         Self {
             board,
-            move_gen,
-
             best_move_so_far: Move::NULLMOVE,
             best_eval_so_far: 0,
-            best_move: Move::NULLMOVE,
-            best_eval: 0,
 
-            cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
-            search_handle: None,
+            // Shared data
+            move_gen,
+            cancelled,
+            best_move,
+            best_eval,
         }
     }
 
-    pub fn start_search(&mut self) {
-        // Reset data from previous search
-        self.best_move_so_far = Move::NULLMOVE;
-        self.best_move = Move::NULLMOVE;
-        self.best_eval_so_far = 0;
-        self.best_eval = 0;
-
-        // Start search
-        self.start_iterative_deepening();
-
-        // If search was cancelled before any moves were looked at, take a
-        // random legal move
-        if self.best_move == Move::NULLMOVE {
-            let mut mvs = Vec::new();
-            self.move_gen.legal_moves(&self.board, &mut mvs);
-            self.best_move = mvs[0];
-        }
-
-        // Reset 'cancelled'
-        self.cancelled
-            .lock()
-            .unwrap()
-            .store(false, Ordering::Relaxed);
+    pub fn start(mut self) -> JoinHandle<()> {
+        thread::spawn(move || self.start_iterative_deepening())
     }
 
-    pub fn best_move(&self) -> (Move, i32) {
-        (self.best_move, self.best_eval)
-    }
-
-    pub fn start_iterative_deepening(&mut self) {
+    fn start_iterative_deepening(&mut self) {
         let mut i = 1;
 
-        while i < 100 {
-            self.search(i, Self::ALPHA, Self::BETA);
+        while i < 254 {
+            self.alpha_beta(Self::ALPHA, Self::BETA, i);
 
-            self.best_move = self.best_move_so_far;
-            self.best_eval = self.best_eval_so_far;
+            *self.best_move.lock().unwrap() = self.best_move_so_far;
+            self.best_eval
+                .lock()
+                .unwrap()
+                .store(self.best_eval_so_far, Ordering::Relaxed);
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
                 break;
@@ -95,7 +141,7 @@ impl<'a> Searcher<'a> {
         }
     }
 
-    pub fn search(&mut self, depth: u8, mut alpha: i32, beta: i32) -> i32 {
+    fn alpha_beta(&mut self, mut alpha: i32, beta: i32, depth: u8) -> i32 {
         if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
             return 0;
         }
@@ -107,31 +153,33 @@ impl<'a> Searcher<'a> {
         let mut moves = Vec::new();
         self.move_gen.legal_moves(&self.board, &mut moves);
 
-        let mut eval;
-
         for mv in moves {
-            let md = self.board.make_move(mv).unwrap();
-
-            eval = -self.search(depth - 1, -beta, -alpha);
-
-            self.board.unmake_move(md).unwrap();
+            let move_data = self.board.make_move(mv).unwrap();
+            let score = self.alpha_beta(-beta, -alpha, depth - 1);
+            println!("{mv}: {score}");
+            self.board.unmake_move(move_data).unwrap();
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
                 break;
             }
 
-            if eval >= beta {
+            if score >= beta {
                 return beta;
             }
 
-            if eval > alpha {
-                // New best move found!
+            if score > alpha {
                 self.best_move_so_far = mv;
-                self.best_eval_so_far = eval;
-
-                alpha = eval;
+                self.best_eval_so_far = score;
+                alpha = score;
             }
         }
 
-    fn search(&mut self) {}
+        *self.best_move.lock().unwrap() = self.best_move_so_far;
+        self.best_eval
+            .lock()
+            .unwrap()
+            .store(self.best_eval_so_far, Ordering::Relaxed);
+
+        alpha
+    }
 }

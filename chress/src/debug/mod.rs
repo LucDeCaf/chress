@@ -3,7 +3,7 @@ use crate::{
     move_gen::MoveGen,
 };
 
-pub fn perft(mut board: Board, move_gen: &MoveGen, depth: usize) -> u64 {
+pub fn perft(board: Board, move_gen: &MoveGen, depth: usize) -> u64 {
     if depth == 0 {
         return 1;
     }

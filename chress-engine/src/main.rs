@@ -6,8 +6,9 @@ use std::{
     },
 };
 
-use chress::{board::Board, move_gen::MoveGen};
-use chress_engine::search::searcher::Searcher;
+use chress::board::Board;
+
+use chress_engine::search::searcher::SearchManager;
 
 extern crate chress;
 
@@ -16,9 +17,8 @@ fn main() -> std::io::Result<()> {
     let cancelled = Arc::new(Mutex::new(AtomicBool::new(false)));
 
     let board = Board::default();
-    let move_gen = MoveGen::new();
 
-    let mut searcher = Searcher::new(board, &move_gen);
+    let mut search_manager = SearchManager::new();
 
     let mut buf = String::new();
     let mut stdin = io::stdin().lock();
@@ -43,12 +43,15 @@ fn main() -> std::io::Result<()> {
             }
 
             "go" => {
-                searcher.start_search();
+                search_manager.start_search(board);
             }
 
             "stop" => {
                 // Cancel the current search
                 cancelled.lock().unwrap().store(true, Ordering::Relaxed);
+
+                // Write the best move
+                println!("bestmove {}", search_manager.best_move());
             }
 
             _ => continue,
