@@ -133,6 +133,5 @@ impl<'a> Searcher<'a> {
             }
         }
 
-        alpha
-    }
+    fn search(&mut self) {}
 }
