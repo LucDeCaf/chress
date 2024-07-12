@@ -92,7 +92,7 @@ fn main() -> std::io::Result<()> {
                 }
 
                 "uci" => {
-                    uci::uci(&mut board, move_gen)?;
+                    uci::uci()?;
                     break 'main;
                 }
 

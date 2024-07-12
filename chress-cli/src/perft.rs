@@ -12,7 +12,7 @@ use chress::{
 };
 
 pub fn perft(board: Board, move_gen: &MoveGen, depth: usize) {
-    let (chress_total, chress_move_results) = divide(board, &move_gen, depth);
+    let (chress_total, chress_move_results) = divide(board, move_gen, depth);
 
     let mut found_moves = HashMap::new();
     for mv in chress_move_results {

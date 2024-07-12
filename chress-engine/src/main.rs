@@ -27,7 +27,7 @@ fn main() -> std::io::Result<()> {
     loop {
         // Get input
         buf.clear();
-        if let Err(_) = stdin.read_line(&mut buf) {
+        if stdin.read_line(&mut buf).is_err() {
             continue;
         }
         buf = buf.trim().to_owned();

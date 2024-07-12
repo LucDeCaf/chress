@@ -360,9 +360,7 @@ impl MoveGen {
             .0
             .trailing_zeros() as usize];
 
-        let is_legal = !self.square_attacked_by(&board, king_square, attacker_color);
-
-        is_legal
+        !self.square_attacked_by(&board, king_square, attacker_color)
     }
 
     /// Generate all legal moves at the current position
@@ -375,7 +373,7 @@ impl MoveGen {
         while i < len {
             let mv = moves[i];
 
-            if !self.is_legal_move(board.clone(), mv) {
+            if !self.is_legal_move(*board, mv) {
                 moves.swap_remove(i);
                 len -= 1;
             } else {

@@ -464,7 +464,7 @@ impl Board {
 
         let mask = square.bitboard();
 
-        let knights = !((self.pieces[0] | self.pieces[6]) & mask).is_empty() as usize * 1;
+        let knights = !((self.pieces[0] | self.pieces[6]) & mask).is_empty() as usize;
         let bishops = !((self.pieces[1] | self.pieces[7]) & mask).is_empty() as usize * 2;
         let rooks = !((self.pieces[2] | self.pieces[8]) & mask).is_empty() as usize * 3;
         let queens = !((self.pieces[3] | self.pieces[9]) & mask).is_empty() as usize * 4;

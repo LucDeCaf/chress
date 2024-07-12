@@ -1,9 +1,11 @@
 use std::{
     sync::{
         atomic::{AtomicBool, AtomicI32, Ordering},
+        mpsc::{channel, Sender},
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
+    time::Duration,
 };
 
 use chress::{
@@ -13,10 +15,32 @@ use chress::{
 
 use crate::evaluation::evaluate;
 
+#[derive(Debug, Clone, Copy)]
+pub enum MoveTime {
+    Infinite,
+    Millis(u32),
+}
+
+impl Default for MoveTime {
+    fn default() -> Self {
+        Self::Infinite
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct SearchSettings {
+    pub ponder: bool,
+    pub moves_to_go: Option<u16>,
+    pub max_depth: Option<u8>,
+    pub movetime: MoveTime,
+}
+
 /// Manages all searching threads and shared data
-#[derive(Debug)]
 pub struct SearchManager {
-    handles: Vec<JoinHandle<()>>,
+    searches: Vec<JoinHandle<()>>,
+    canceller: Option<Sender<bool>>,
+
+    pub settings: SearchSettings,
     pub running: bool,
 
     // Shared data
@@ -29,8 +53,11 @@ pub struct SearchManager {
 impl SearchManager {
     pub fn new(move_gen: Arc<MoveGen>) -> Self {
         Self {
-            handles: Vec::new(),
+            searches: Vec::new(),
+            canceller: None,
+
             running: false,
+            settings: SearchSettings::default(),
 
             move_gen,
             cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
@@ -46,6 +73,53 @@ impl SearchManager {
             .unwrap()
             .store(false, Ordering::Relaxed);
         *self.best_move.lock().unwrap() = Move::NULLMOVE;
+        self.best_eval.lock().unwrap().store(0, Ordering::Relaxed);
+
+        // Activate canceller if search time is not infinite
+        match self.settings.movetime {
+            MoveTime::Millis(millis) => {
+                // Create a new channel
+                if let Some(tx) = &self.canceller {
+                    let _ = tx.send(true);
+                }
+
+                let (tx, rx) = channel();
+                self.canceller = Some(tx);
+
+                let cancelled = Arc::clone(&self.cancelled);
+                let best_move = Arc::clone(&self.best_move);
+                let duration = Duration::from_millis(millis as u64);
+
+                thread::spawn(move || {
+                    // Wait for specified time
+                    thread::sleep(duration);
+
+                    // Prevent cancelling searches that shouldn't be cancelled.
+                    //
+                    // This scenario comes up when the engine is told to search for a specified
+                    // amount of time but is later told to stop the search early. This creates a
+                    // window of time during which no search is occuring but the canceller still wants
+                    // to cancel any searches.
+                    //
+                    // If a new search is begun in this window, it is possible that the canceller
+                    // will cancel the new search early and cause the engine to play a bad move.
+                    //
+                    // For this purpose, the engine will tell the canceller NOT to cancel when certain
+                    // events occur, namely the search being stopped manually by the GUI.
+                    if let Ok(dont_cancel) = rx.try_recv() {
+                        if dont_cancel {
+                            return;
+                        }
+                    }
+
+                    cancelled.lock().unwrap().store(true, Ordering::Relaxed);
+                    println!("bestmove {}", *best_move.lock().unwrap());
+                });
+            }
+            _ => {
+                self.canceller = None;
+            }
+        }
 
         // Clone shared data references
         let move_gen = Arc::clone(&self.move_gen);
@@ -55,12 +129,19 @@ impl SearchManager {
 
         // Start new search
         let new_search = Search::new(position, move_gen, cancelled, best_move, best_eval);
-        self.handles.push(new_search.start());
+        self.searches.push(new_search.start());
 
         self.running = true;
     }
 
-    pub fn cancel(&mut self) {
+    pub fn stop(&mut self) {
+        // Stop canceller from automatically cancelling
+        if let Some(sender) = &self.canceller {
+            let _ = sender.send(true);
+        }
+
+        self.canceller = None;
+
         self.cancelled
             .lock()
             .unwrap()
@@ -68,9 +149,11 @@ impl SearchManager {
 
         self.running = false;
 
-        for _ in 0..self.handles.len() {
-            self.handles.pop().unwrap().join().unwrap();
+        for _ in 0..self.searches.len() {
+            drop(self.searches.pop());
         }
+
+        println!("bestmove {}", self.best_move());
     }
 
     pub fn best_move(&self) -> Move {
@@ -130,8 +213,6 @@ impl Search {
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
                 break;
             }
-
-            println!("{i}: {}", self.best_move_so_far);
 
             *self.best_move.lock().unwrap() = self.best_move_so_far;
             self.best_eval

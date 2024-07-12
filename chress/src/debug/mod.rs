@@ -14,7 +14,7 @@ pub fn perft(board: Board, move_gen: &MoveGen, depth: usize) -> u64 {
     let mut count = 0;
 
     for mv in moves {
-        let mut b = board.clone();
+        let mut b = board;
         b.make_move(mv).unwrap();
 
         count += perft(b, move_gen, depth - 1);

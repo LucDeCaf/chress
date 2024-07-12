@@ -47,7 +47,7 @@ impl Bitboard {
     pub fn pop_lsb(&mut self) -> u32 {
         let i = self.0.trailing_zeros();
         self.0 &= self.0 - 1;
-        i as u32
+        i
     }
 
     pub fn is_empty(&self) -> bool {
