@@ -17,6 +17,7 @@ use crate::evaluation::evaluate;
 #[derive(Debug)]
 pub struct SearchManager {
     handles: Vec<JoinHandle<()>>,
+    pub running: bool,
 
     // Shared data
     pub move_gen: Arc<MoveGen>,
@@ -29,6 +30,7 @@ impl SearchManager {
     pub fn new(move_gen: Arc<MoveGen>) -> Self {
         Self {
             handles: Vec::new(),
+            running: false,
 
             move_gen,
             cancelled: Arc::new(Mutex::new(AtomicBool::new(false))),
@@ -54,6 +56,8 @@ impl SearchManager {
         // Start new search
         let new_search = Search::new(position, move_gen, cancelled, best_move, best_eval);
         self.handles.push(new_search.start());
+
+        self.running = true;
     }
 
     pub fn cancel(&mut self) {
@@ -61,6 +65,12 @@ impl SearchManager {
             .lock()
             .unwrap()
             .store(true, Ordering::Relaxed);
+
+        self.running = false;
+
+        for _ in 0..self.handles.len() {
+            self.handles.pop().unwrap().join().unwrap();
+        }
     }
 
     pub fn best_move(&self) -> Move {
@@ -87,12 +97,6 @@ pub struct Search {
 }
 
 impl Search {
-    const MAX_SCORE: i32 = 999999;
-    const MIN_SCORE: i32 = -999999;
-
-    pub const ALPHA: i32 = Self::MAX_SCORE;
-    pub const BETA: i32 = Self::MIN_SCORE;
-
     pub fn new(
         board: Board,
         move_gen: Arc<MoveGen>,
@@ -121,7 +125,13 @@ impl Search {
         let mut i = 1;
 
         while i < 254 {
-            self.alpha_beta(Self::BETA, Self::ALPHA, i);
+            self.alpha_beta(0, -999999, 999999, i);
+
+            if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
+                break;
+            }
+
+            println!("{i}: {}", self.best_move_so_far);
 
             *self.best_move.lock().unwrap() = self.best_move_so_far;
             self.best_eval
@@ -129,15 +139,11 @@ impl Search {
                 .unwrap()
                 .store(self.best_eval_so_far, Ordering::Relaxed);
 
-            if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
-                break;
-            }
-
             i += 1;
         }
     }
 
-    fn alpha_beta(&mut self, mut alpha: i32, beta: i32, depth: u8) -> i32 {
+    fn alpha_beta(&mut self, ply_from_root: u8, mut alpha: i32, beta: i32, depth: u8) -> i32 {
         if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
             return 0;
         }
@@ -151,8 +157,7 @@ impl Search {
 
         for mv in moves {
             let move_data = self.board.make_move(mv).unwrap();
-            let score = -self.alpha_beta(-beta, -alpha, depth - 1)
-                * self.board.active_color.direction() as i32;
+            let score = -self.alpha_beta(ply_from_root + 1, -beta, -alpha, depth - 1);
             self.board.unmake_move(move_data).unwrap();
 
             if self.cancelled.lock().unwrap().load(Ordering::Relaxed) {
@@ -164,17 +169,13 @@ impl Search {
             }
 
             if score > alpha {
-                self.best_move_so_far = mv;
-                self.best_eval_so_far = score;
+                if ply_from_root == 0 {
+                    self.best_move_so_far = mv;
+                    self.best_eval_so_far = score;
+                }
                 alpha = score;
             }
         }
-
-        *self.best_move.lock().unwrap() = self.best_move_so_far;
-        self.best_eval
-            .lock()
-            .unwrap()
-            .store(self.best_eval_so_far, Ordering::Relaxed);
 
         alpha
     }

@@ -84,13 +84,25 @@ fn process_command(
             Some(String::from("readyok"))
         }
         Command::Position(moves) => {
-            for r#move in moves {
-                if r#move == "startpos" {
-                    board.load_from_fen(START_FEN, move_gen).unwrap();
-                    return None;
-                }
+            if let Some(first) = moves.first() {
+                match first.as_str() {
+                    "startpos" => board.load_from_fen(START_FEN, move_gen).unwrap(),
+                    "fen" => {
+                        let Some(fen) = moves.get(1) else {
+                            eprintln!("Missing argument for 'fen'");
+                            return None;
+                        };
 
-                let r#move = Move::try_from(&r#move[..])
+                        board
+                            .load_from_fen(fen, move_gen)
+                            .expect("FEN string should be valid");
+                    }
+                    _ => (),
+                }
+            }
+
+            for r#move in &moves[1..] {
+                let r#move = Move::try_from(r#move.as_str())
                     .expect("UCI move should be in long algebraic notation");
 
                 board.make_move(r#move).expect("UCI move should be legal");
@@ -103,9 +115,12 @@ fn process_command(
             None
         }
         Command::Stop => {
-            search_manager.cancel();
-            let best_move = search_manager.best_move();
-            Some(format!("bestmove {}", best_move.to_string().trim()))
+            if search_manager.running {
+                search_manager.cancel();
+                let best_move = search_manager.best_move();
+                return Some(format!("bestmove {}", best_move.to_string().trim()));
+            }
+            None
         }
         Command::Quit => None,
     }
