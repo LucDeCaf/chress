@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display};
 
+use serde::{Deserialize, Serialize};
+
 use super::r#move::Move;
 
 #[derive(Debug, Clone, Copy)]
@@ -15,7 +17,7 @@ impl Display for ParsePieceCharError {
 
 impl Error for ParsePieceCharError {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Piece {
     // Order like this for branchless promotions

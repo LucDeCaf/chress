@@ -7,11 +7,13 @@ use std::{
     },
 };
 
+use serde::{Deserialize, Serialize};
+
 use crate::board::r#move::Move;
 
 use super::square::Square;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy, Serialize, Deserialize)]
 pub struct Bitboard(pub u64);
 
 impl Bitboard {

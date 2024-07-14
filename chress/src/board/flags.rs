@@ -3,6 +3,8 @@ use std::{
     ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Mul, Not},
 };
 
+use serde::{Deserialize, Serialize};
+
 use super::color::Color;
 
 /// ```
@@ -10,7 +12,7 @@ use super::color::Color;
 /// // En Passant File : -FFF----
 /// // Can En Passant  : F-------
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Flags(pub u8);
 
 impl Flags {

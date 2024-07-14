@@ -1,5 +1,7 @@
 use std::{cmp::Ordering, fmt::Display};
 
+use serde::{Deserialize, Serialize};
+
 use super::{flags::Flags, piece::Piece, square::Square};
 
 #[derive(Debug)]
@@ -9,7 +11,7 @@ pub enum ParseMoveError {
     BadPromotion,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Move(u16);
 
 impl Move {

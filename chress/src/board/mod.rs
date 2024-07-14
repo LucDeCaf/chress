@@ -8,6 +8,8 @@ pub mod square;
 
 use std::{error::Error, fmt::Display};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     board::{
         bitboard::Bitboard,
@@ -135,7 +137,7 @@ impl Display for ParseFenError {
 
 impl Error for ParseFenError {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Board {
     pub pieces: [Bitboard; 12],
     pub active_color: Color,

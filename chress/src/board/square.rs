@@ -1,8 +1,10 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use super::bitboard::Bitboard;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Square {
     A1,
