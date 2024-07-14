@@ -707,7 +707,6 @@ impl Default for Board {
                 Bitboard(1152921504606846976),
                 // Black pawns
                 Bitboard(71776119061217280),
-
                 // White knights
                 Bitboard(66),
                 // White bishops
@@ -778,113 +777,14 @@ impl Display for Board {
 
 #[cfg(test)]
 mod board_tests {
-    extern crate test;
-
     use super::*;
 
-    use rand::{thread_rng, Rng};
-    use test::{black_box, Bencher};
-
-    pub const KIWIPETE: &str =
-        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
-    pub const _POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
-    pub const _POSITION_4: &str = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    // pub const KIWIPETE: &str =
+    //     "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    // pub const POSITION_3: &str = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
+    // pub const POSITION_4: &str =
+    //     "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
     pub const POSITION_5: &str = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
-
-    #[bench]
-    fn friendly_pieces_offset(b: &mut Bencher) {
-        let mut board = Board::default();
-
-        b.iter(black_box(|| {
-            board.friendly_pieces();
-            board.active_color = board.active_color.inverse();
-        }))
-    }
-
-    #[bench]
-    fn enemy_pieces_offset(b: &mut Bencher) {
-        let mut board = Board::default();
-
-        b.iter(black_box(|| {
-            board.enemy_pieces();
-            board.active_color = board.active_color.inverse();
-        }))
-    }
-
-    #[bench]
-    fn make_unmake(b: &mut Bencher) {
-        let move_gen = MoveGen::new();
-        let mut board = Board::from_fen(KIWIPETE, &move_gen).unwrap();
-        let mg = MoveGen::new();
-
-        let mut moves = Vec::new();
-        mg.legal_moves(&board, &mut moves);
-
-        b.iter(|| {
-            for r#move in moves.iter() {
-                let move_data = board.make_move(*r#move).unwrap();
-                board.unmake_move(move_data).unwrap();
-            }
-        })
-    }
-
-    // 30.7 ± 1.1
-    #[bench]
-    fn piece_at_branched(b: &mut Bencher) {
-        let move_gen = MoveGen::new();
-        let board = Board::from_fen(KIWIPETE, &move_gen).unwrap();
-
-        let mut rng = thread_rng();
-
-        b.iter(|| {
-            let square = Square::ALL[rng.gen_range(0..64)];
-
-            for (i, bb) in board.pieces.into_iter().enumerate() {
-                if !(bb & square.bitboard()).is_empty() {
-                    return Some(Piece::ALL[i % 6]);
-                }
-            }
-
-            None
-        });
-    }
-
-    // 26.4 ± 0.7
-    #[bench]
-    fn piece_at_branchless(b: &mut Bencher) {
-        let move_gen = MoveGen::new();
-        let board = Board::from_fen(KIWIPETE, &move_gen).unwrap();
-
-        let mut rng = thread_rng();
-
-        const PIECES: [Option<Piece>; 7] = [
-            None,
-            Some(Piece::Knight),
-            Some(Piece::Bishop),
-            Some(Piece::Rook),
-            Some(Piece::Queen),
-            Some(Piece::Pawn),
-            Some(Piece::King),
-        ];
-
-        b.iter(|| {
-            let square = Square::ALL[rng.gen_range(0..64)];
-
-            let mask = square.bitboard();
-
-            // Using conditionals, not branches
-            let knights = !((board.pieces[0] | board.pieces[6]) & mask).is_empty() as usize * 1;
-            let bishops = !((board.pieces[1] | board.pieces[7]) & mask).is_empty() as usize * 2;
-            let rooks = !((board.pieces[2] | board.pieces[8]) & mask).is_empty() as usize * 3;
-            let queens = !((board.pieces[3] | board.pieces[9]) & mask).is_empty() as usize * 4;
-            let pawns = !((board.pieces[4] | board.pieces[10]) & mask).is_empty() as usize * 5;
-            let kings = !((board.pieces[5] | board.pieces[11]) & mask).is_empty() as usize * 6;
-
-            let piece_at_square_index = knights | bishops | rooks | queens | pawns | kings;
-
-            PIECES[piece_at_square_index]
-        });
-    }
 
     #[test]
     fn board_default() {
