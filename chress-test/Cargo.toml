@@ -1,8 +1,7 @@
 [package]
-name = "chress_engine"
+name = "chress_test"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 chress = { path = "../chress" }
-chress_test = { path = "../chress-test" }

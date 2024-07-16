@@ -29,6 +29,14 @@ name = "chress_engine"
 version = "0.1.0"
 dependencies = [
  "chress",
+ "chress_test",
+]
+
+[[package]]
+name = "chress_test"
+version = "0.1.0"
+dependencies = [
+ "chress",
 ]
 
 [[package]]
