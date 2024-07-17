@@ -179,7 +179,7 @@ impl MoveGen {
     }
 
     /// Get all pseudolegal moves
-    pub fn pseudolegal_moves(&self, board: &Board, moves: &mut Vec<Move>) {
+    pub fn pseudolegal_moves(&self, board: &Board, moves: &mut Vec<Move>) -> usize {
         let color = board.active_color;
         let attacker_color = color.inverse();
 
@@ -344,6 +344,8 @@ impl MoveGen {
         // Queen moves
         let queens = board.bitboard(Piece::Queen, color);
         self.append_moves_getter(board, moves, queens, Self::pseudo_queen_moves);
+
+        moves.len()
     }
 
     /// Takes a mutable reference to self because to check legality the
@@ -364,11 +366,10 @@ impl MoveGen {
     }
 
     /// Generate all legal moves at the current position
-    pub fn legal_moves(&self, board: &Board, moves: &mut Vec<Move>) {
-        self.pseudolegal_moves(board, moves);
+    pub fn legal_moves(&self, board: &Board, moves: &mut Vec<Move>) -> usize {
+        let mut len = self.pseudolegal_moves(board, moves);
 
         let mut i = 0;
-        let mut len = moves.len();
 
         while i < len {
             let mv = moves[i];
@@ -380,6 +381,8 @@ impl MoveGen {
                 i += 1;
             }
         }
+
+        len
     }
 }
 

@@ -51,9 +51,9 @@ fn main() -> std::io::Result<()> {
         // ?  - Checkmate
         // ?  - Insufficient material
 
-        if let Some(game_end) = board.game_over() {
-            break;
-        }
+        // if let Some(game_end) = board.game_over() {
+        //     break;
+        // }
     }
 
     Ok(())

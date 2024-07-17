@@ -385,14 +385,6 @@ impl Board {
         fen
     }
 
-    pub fn halfmoves(&self) -> u32 {
-        self.halfmoves
-    }
-
-    pub fn fullmoves(&self) -> u32 {
-        self.fullmoves
-    }
-
     pub fn flip_color(&mut self) {
         self.active_color = self.active_color.inverse();
     }
