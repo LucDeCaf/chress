@@ -24,49 +24,58 @@ use crate::{
 
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-pub const KING_STARTING_SQUARES: [Square; 2] = [Square::E1, Square::E8];
-pub const CASTLING_BLOCKERS: [[Bitboard; 2]; 2] = [
-    // White
-    [
-        Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0), // Kingside
-        Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0 | Square::B1.bitboard().0), // Queenside
-    ],
-    // Black
-    [
-        Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0), // Kingside
-        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0 | Square::B8.bitboard().0), // Queenside
-    ],
-];
-pub const CASTLING_CHECKABLES: [[Bitboard; 2]; 2] = [
-    // White
-    [
-        Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0), // Kingside
-        Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0), // Queenside
-    ],
-    // Black
-    [
-        Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0), // Kingside
-        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0), // Queenside
-    ],
-];
-pub const CASTLING_DESTINATIONS: [[Square; 2]; 2] = [
-    // White
-    [
-        Square::G1, // Kingside
-        Square::C1, // Queenside
-    ],
-    // Black
-    [
-        Square::G8, // Kingside
-        Square::C8, // Queenside
-    ],
-];
+pub const KING_STARTING_SQUARES: [Square; 2] = {
+    let mut table = [Square::A1, Square::A1];
+
+    table[Color::White as usize] = Square::E1;
+    table[Color::Black as usize] = Square::E8;
+
+    table
+};
+pub const CASTLING_BLOCKERS: [[Bitboard; 2]; 2] = {
+    let mut table = [
+        [Bitboard::EMPTY, Bitboard::EMPTY],
+        [Bitboard::EMPTY, Bitboard::EMPTY],
+    ];
+
+    table[Color::White as usize][0] = Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0);
+    table[Color::White as usize][1] =
+        Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0 | Square::B1.bitboard().0);
+    table[Color::Black as usize][0] = Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0);
+    table[Color::Black as usize][1] =
+        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0 | Square::B8.bitboard().0);
+
+    table
+};
+pub const CASTLING_CHECKABLES: [[Bitboard; 2]; 2] = {
+    let mut table = [
+        [Bitboard::EMPTY, Bitboard::EMPTY],
+        [Bitboard::EMPTY, Bitboard::EMPTY],
+    ];
+
+    table[Color::White as usize][0] = Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0);
+    table[Color::White as usize][1] = Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0);
+    table[Color::Black as usize][0] = Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0);
+    table[Color::Black as usize][1] = Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0);
+
+    table
+};
+pub const CASTLING_DESTINATIONS: [[Square; 2]; 2] = {
+    let mut table = [[Square::A1, Square::A1], [Square::A1, Square::A1]];
+
+    table[Color::White as usize] = [Square::G1, Square::C1];
+    table[Color::Black as usize] = [Square::G8, Square::C8];
+
+    table
+};
 pub const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
     let mut table = [Flags::UNIVERSE; 64];
+
     table[Square::A1 as usize] = Flags(!Flags::WHITE_QUEENSIDE.0);
     table[Square::A8 as usize] = Flags(!Flags::BLACK_QUEENSIDE.0);
     table[Square::H1 as usize] = Flags(!Flags::WHITE_KINGSIDE.0);
     table[Square::H8 as usize] = Flags(!Flags::BLACK_KINGSIDE.0);
+
     table
 };
 pub const ROOK_CASTLING_MOVEMASKS: [Bitboard; 64] = {
