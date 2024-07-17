@@ -7,19 +7,14 @@ use serde::{Deserialize, Serialize};
 
 use super::color::Color;
 
-/// ```
-/// // Castling Rights : ----FFFF
-/// // En Passant File : -FFF----
-/// // Can En Passant  : F-------
-/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Flags(pub u8);
 
 impl Flags {
-    pub const BLACK_KINGSIDE: Flags = Flags(0b0000_0001);
-    pub const BLACK_QUEENSIDE: Flags = Flags(0b0000_0010);
-    pub const WHITE_KINGSIDE: Flags = Flags(0b0000_0100);
-    pub const WHITE_QUEENSIDE: Flags = Flags(0b0000_1000);
+    pub const WHITE_KINGSIDE: Flags = Flags(0b0000_0001);
+    pub const WHITE_QUEENSIDE: Flags = Flags(0b0000_0010);
+    pub const BLACK_KINGSIDE: Flags = Flags(0b0000_0100);
+    pub const BLACK_QUEENSIDE: Flags = Flags(0b0000_1000);
     pub const EP_FILE: Flags = Flags(0b0111_0000);
     pub const EP_IS_VALID: Flags = Flags(0b1000_0000);
 
@@ -47,11 +42,11 @@ impl Flags {
     }
 
     pub fn kingside(&self, color: Color) -> bool {
-        (self.0 >> (color as u8 * 2)) & Self::BLACK_KINGSIDE.0 != 0
+        (self.0 >> (color as u8 * 2)) & Self::WHITE_KINGSIDE.0 != 0
     }
 
     pub fn queenside(&self, color: Color) -> bool {
-        (self.0 >> (color as u8 * 2)) & Self::BLACK_QUEENSIDE.0 != 0
+        (self.0 >> (color as u8 * 2)) & Self::WHITE_QUEENSIDE.0 != 0
     }
 
     pub fn en_passant_file(&self) -> Option<u8> {
@@ -182,9 +177,11 @@ mod flag_tests {
     #[test]
     fn kingside() {
         let flags = Flags(0b00000011);
-        let color = Color::Black;
+        let color = Color::White;
 
         assert!(flags.kingside(color));
         assert!(!flags.kingside(color.inverse()));
+        assert!(flags.queenside(color));
+        assert!(!flags.queenside(color.inverse()));
     }
 }

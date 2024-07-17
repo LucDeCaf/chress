@@ -5,24 +5,24 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Color {
-    Black = 0,
-    White = 1,
+    White,
+    Black,
 }
 
 impl Color {
     // Array containing the colors for branchless access
-    pub const ALL: [Color; 2] = [Color::Black, Color::White];
+    pub const ALL: [Color; 2] = [Color::White, Color::Black];
 
     pub fn inverse(&self) -> Self {
         Self::ALL[(*self as usize) ^ 1]
     }
 
     pub fn direction(&self) -> i8 {
-        2 * (*self as i8) - 1
+        1 - (*self as i8 * 2)
     }
 
     pub fn en_passant_rank(&self) -> u8 {
-        5 - (*self as u8 * 3)
+        2 + (*self as u8 * 3)
     }
 }
 

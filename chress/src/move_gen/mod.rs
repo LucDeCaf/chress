@@ -192,12 +192,12 @@ impl MoveGen {
         // Pawn move data
         let pawn_data = [
             (
-                Self::black_pawns_able_to_push(board, empty_squares),
-                Self::black_pawns_able_to_double_push(board, empty_squares),
-            ),
-            (
                 Self::white_pawns_able_to_push(board, empty_squares),
                 Self::white_pawns_able_to_double_push(board, empty_squares),
+            ),
+            (
+                Self::black_pawns_able_to_push(board, empty_squares),
+                Self::black_pawns_able_to_double_push(board, empty_squares),
             ),
         ];
 

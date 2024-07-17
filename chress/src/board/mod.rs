@@ -24,41 +24,41 @@ use crate::{
 
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-pub const KING_STARTING_SQUARES: [Square; 2] = [Square::E8, Square::E1];
+pub const KING_STARTING_SQUARES: [Square; 2] = [Square::E1, Square::E8];
 pub const CASTLING_BLOCKERS: [[Bitboard; 2]; 2] = [
-    // Black
-    [
-        Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0), // Kingside
-        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0 | Square::B8.bitboard().0), // Queenside
-    ],
     // White
     [
         Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0), // Kingside
         Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0 | Square::B1.bitboard().0), // Queenside
     ],
-];
-pub const CASTLING_CHECKABLES: [[Bitboard; 2]; 2] = [
     // Black
     [
         Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0), // Kingside
-        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0), // Queenside
+        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0 | Square::B8.bitboard().0), // Queenside
     ],
+];
+pub const CASTLING_CHECKABLES: [[Bitboard; 2]; 2] = [
     // White
     [
         Bitboard(Square::F1.bitboard().0 | Square::G1.bitboard().0), // Kingside
         Bitboard(Square::D1.bitboard().0 | Square::C1.bitboard().0), // Queenside
     ],
-];
-pub const CASTLING_DESTINATIONS: [[Square; 2]; 2] = [
     // Black
     [
-        Square::G8, // Kingside
-        Square::C8, // Queenside
+        Bitboard(Square::F8.bitboard().0 | Square::G8.bitboard().0), // Kingside
+        Bitboard(Square::D8.bitboard().0 | Square::C8.bitboard().0), // Queenside
     ],
+];
+pub const CASTLING_DESTINATIONS: [[Square; 2]; 2] = [
     // White
     [
         Square::G1, // Kingside
         Square::C1, // Queenside
+    ],
+    // Black
+    [
+        Square::G8, // Kingside
+        Square::C8, // Queenside
     ],
 ];
 pub const CASTLING_RIGHTS_FLAGS: [Flags; 64] = {
@@ -312,7 +312,7 @@ impl Board {
                     fen.push((tiles_since_last_piece + b'0') as char);
                 }
                 let mut ch = char::from(piece) as u8;
-                if !(self.white_pieces() & square.bitboard()).is_empty() {
+                if !(self.black_pieces() & square.bitboard()).is_empty() {
                     ch -= b'a' - b'A';
                 }
 
@@ -372,7 +372,7 @@ impl Board {
         fen.push(' ');
 
         if let Some(file) = self.flags.en_passant_file() {
-            let rank = 3 + (self.active_color as u8 * 3);
+            let rank = self.active_color.inverse().en_passant_rank() + 1;
             let file = (file + b'a') as char;
 
             fen.push_str(&format!("{file}{rank}",));
@@ -689,18 +689,6 @@ impl Default for Board {
     fn default() -> Self {
         Board {
             pieces: [
-                // Black knights
-                Bitboard(4755801206503243776),
-                // Black bishops
-                Bitboard(2594073385365405696),
-                // Black rooks
-                Bitboard(9295429630892703744),
-                // Black queens
-                Bitboard(576460752303423488),
-                // Black kings
-                Bitboard(1152921504606846976),
-                // Black pawns
-                Bitboard(71776119061217280),
                 // White knights
                 Bitboard(66),
                 // White bishops
@@ -713,6 +701,18 @@ impl Default for Board {
                 Bitboard(16),
                 // White pawns
                 Bitboard(65280),
+                // Black knights
+                Bitboard(4755801206503243776),
+                // Black bishops
+                Bitboard(2594073385365405696),
+                // Black rooks
+                Bitboard(9295429630892703744),
+                // Black queens
+                Bitboard(576460752303423488),
+                // Black kings
+                Bitboard(1152921504606846976),
+                // Black pawns
+                Bitboard(71776119061217280),
             ],
 
             active_color: Color::White,
