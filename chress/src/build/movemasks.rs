@@ -1,7 +1,17 @@
-use crate::board::bitboard::Bitboard;
+use crate::board::{bitboard::Bitboard, color::Color};
 
-pub const PAWN_MOVES: [&[Bitboard; 64]; 2] = [&WHITE_PAWN_MOVES, &BLACK_PAWN_MOVES];
-pub const PAWN_CAPTURES: [&[Bitboard; 64]; 2] = [&WHITE_PAWN_CAPTURES, &BLACK_PAWN_CAPTURES];
+pub const PAWN_MOVES: [&[Bitboard; 64]; 2] = {
+    let mut table = [&[Bitboard::EMPTY; 64]; 2];
+    table[Color::White as usize] = &WHITE_PAWN_MOVES;
+    table[Color::Black as usize] = &BLACK_PAWN_MOVES;
+    table
+};
+pub const PAWN_CAPTURES: [&[Bitboard; 64]; 2] = {
+    let mut table = [&[Bitboard::EMPTY; 64]; 2];
+    table[Color::White as usize] = &WHITE_PAWN_CAPTURES;
+    table[Color::Black as usize] = &BLACK_PAWN_CAPTURES;
+    table
+};
 
 pub const WHITE_PAWN_MOVES: [Bitboard; 64] = [
     Bitboard(0),
